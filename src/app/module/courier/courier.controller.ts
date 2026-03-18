@@ -33,4 +33,14 @@ const deleteCourier = catchAsync(async (req, res) => {
   sendResponse(res, { httpStatusCode: status.OK, success: true, message: 'Courier deleted.' });
 });
 
-export const CourierController = { createCourier, getAllCouriers, getCourierById, getMyCourierProfile, updateCourier, deleteCourier };
+const approveCourier = catchAsync(async (req, res) => {
+  const result = await CourierService.approveCourier(req.params.id as string, req.body.approvalStatus);
+  sendResponse(res, { httpStatusCode: status.OK, success: true, message: 'Courier approval status updated.', data: result });
+});
+
+const toggleAvailability = catchAsync(async (req, res) => {
+  const result = await CourierService.toggleAvailability(req.user!.userId);
+  sendResponse(res, { httpStatusCode: status.OK, success: true, message: 'Availability toggled.', data: result });
+});
+
+export const CourierController = { createCourier, getAllCouriers, getCourierById, getMyCourierProfile, updateCourier, deleteCourier, approveCourier, toggleAvailability };

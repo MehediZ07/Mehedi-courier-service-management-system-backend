@@ -8,6 +8,11 @@ const register = catchAsync(async (req, res) => {
   sendResponse(res, { httpStatusCode: status.CREATED, success: true, message: 'User registered successfully.', data: result });
 });
 
+const registerCourier = catchAsync(async (req, res) => {
+  const result = await AuthService.registerCourier(req.body);
+  sendResponse(res, { httpStatusCode: status.CREATED, success: true, message: 'Courier registration submitted. Awaiting admin approval.', data: result });
+});
+
 const login = catchAsync(async (req, res) => {
   const { email, password } = req.body;
   const result = await AuthService.login(email, password);
@@ -31,4 +36,4 @@ const getMe = catchAsync(async (req, res) => {
   sendResponse(res, { httpStatusCode: status.OK, success: true, message: 'Profile fetched.', data: result });
 });
 
-export const AuthController = { register, login, refreshToken, changePassword, getMe };
+export const AuthController = { register, registerCourier, login, refreshToken, changePassword, getMe };

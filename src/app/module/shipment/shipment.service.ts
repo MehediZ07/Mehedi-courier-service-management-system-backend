@@ -205,6 +205,55 @@ const updateShipmentStatus = async (
   });
 };
 
+const getAvailableShipments = async (queryParams: IQueryParams) => {
+  return new QueryBuilder(prisma.shipment, queryParams, {
+    searchableFields: ['trackingNumber', 'pickupAddress', 'deliveryAddress'],
+    filterableFields: ['priority'],
+  })
+    .search()
+    .filter()
+    .sort()
+    .paginate()
+    .where({ status: ShipmentStatus.PENDING, courierId: null })
+    .include(shipmentInclude)
+    .execute();
+};
+
+const acceptShipment = async (shipmentId: string, userId: string) => {
+  const courier = await prisma.courier.findUnique({ where: { userId } });
+  if (!courier) throw new AppError(status.NOT_FOUND, 'Courier profile not found.');
+  if (courier.approvalStatus !== 'APPROVED') throw new AppError(status.FORBIDDEN, 'Your courier account is not approved yet.');
+  if (!courier.availability) throw new AppError(status.BAD_REQUEST, 'You must be available to accept shipments.');
+
+  const shipment = await prisma.shipment.findUnique({ where: { id: shipmentId } });
+  if (!shipment) throw new AppError(status.NOT_FOUND, 'Shipment not found.');
+  if (shipment.status !== ShipmentStatus.PENDING) throw new AppError(status.BAD_REQUEST, 'This shipment is no longer available.');
+  if (shipment.courierId) throw new AppError(status.BAD_REQUEST, 'This shipment is already assigned.');
+
+  return prisma.$transaction(async (tx) => {
+    const updated = await tx.shipment.update({
+      where: { id: shipmentId },
+      data: { courierId: courier.id, status: ShipmentStatus.ASSIGNED },
+      include: shipmentInclude,
+    });
+
+    await tx.shipmentEvent.create({
+      data: { shipmentId, status: ShipmentStatus.ASSIGNED, updatedBy: userId },
+    });
+
+    await tx.notification.create({
+      data: {
+        shipmentId,
+        userId: shipment.senderId,
+        role: Role.USER,
+        message: `Your shipment ${shipment.trackingNumber} has been accepted by a courier.`,
+      },
+    });
+
+    return updated;
+  });
+};
+
 export const ShipmentService = {
   createShipment,
   getAllShipments,
@@ -214,4 +263,6 @@ export const ShipmentService = {
   trackShipment,
   assignCourier,
   updateShipmentStatus,
+  getAvailableShipments,
+  acceptShipment,
 };

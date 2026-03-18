@@ -26,6 +26,40 @@ const register = async (payload: { name: string; email: string; password: string
   return user;
 };
 
+const registerCourier = async (payload: { name: string; email: string; password: string; phone: string; vehicleType: string; licenseNumber: string }) => {
+  const existing = await prisma.user.findUnique({ where: { email: payload.email.toLowerCase() } });
+  if (existing) throw new AppError(status.CONFLICT, 'Email already registered.');
+
+  const hashedPassword = await bcrypt.hash(payload.password, 12);
+
+  const result = await prisma.$transaction(async (tx) => {
+    const user = await tx.user.create({
+      data: {
+        name: payload.name,
+        email: payload.email.toLowerCase(),
+        password: hashedPassword,
+        phone: payload.phone,
+        role: Role.COURIER,
+      },
+    });
+
+    const courier = await tx.courier.create({
+      data: {
+        userId: user.id,
+        vehicleType: payload.vehicleType as any,
+        licenseNumber: payload.licenseNumber,
+        approvalStatus: 'PENDING',
+        availability: false,
+      },
+      include: { user: { select: { id: true, name: true, email: true, phone: true, role: true, status: true } } },
+    });
+
+    return courier;
+  });
+
+  return result;
+};
+
 const login = async (email: string, password: string) => {
   const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
   if (!user) throw new AppError(status.UNAUTHORIZED, 'Invalid email or password.');
@@ -88,4 +122,4 @@ const getMe = async (userId: string) => {
   });
 };
 
-export const AuthService = { register, login, refreshToken, changePassword, getMe };
+export const AuthService = { register, registerCourier, login, refreshToken, changePassword, getMe };

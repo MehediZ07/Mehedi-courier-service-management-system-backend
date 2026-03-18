@@ -12,6 +12,12 @@ enum UserStatus {
   SUSPENDED
 }
 
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum ShipmentStatus {
   PENDING
   ASSIGNED

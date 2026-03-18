@@ -12,4 +12,8 @@ const update = z.object({
   availability: z.boolean().optional(),
 });
 
-export const CourierValidation = { create, update };
+const approveReject = z.object({
+  approvalStatus: z.enum(['APPROVED', 'REJECTED']),
+});
+
+export const CourierValidation = { create, update, approveReject };

@@ -23,7 +23,7 @@ const createCourier = async (payload: { userId: string; vehicleType: VehicleType
 const getAllCouriers = async (queryParams: IQueryParams) => {
   return new QueryBuilder(prisma.courier, queryParams, {
     searchableFields: ['licenseNumber', 'user.name', 'user.email'],
-    filterableFields: ['vehicleType', 'availability'],
+    filterableFields: ['vehicleType', 'availability', 'approvalStatus'],
   })
     .search()
     .filter()
@@ -63,4 +63,27 @@ const deleteCourier = async (id: string) => {
   await prisma.courier.delete({ where: { id } });
 };
 
-export const CourierService = { createCourier, getAllCouriers, getCourierById, getMyCourierProfile, updateCourier, deleteCourier };
+const approveCourier = async (id: string, approvalStatus: 'APPROVED' | 'REJECTED') => {
+  const courier = await prisma.courier.findUnique({ where: { id } });
+  if (!courier) throw new AppError(status.NOT_FOUND, 'Courier not found.');
+
+  return prisma.courier.update({
+    where: { id },
+    data: { approvalStatus, availability: approvalStatus === 'APPROVED' ? true : false },
+    include: { user: { select: { id: true, name: true, email: true, phone: true } } },
+  });
+};
+
+const toggleAvailability = async (userId: string) => {
+  const courier = await prisma.courier.findUnique({ where: { userId } });
+  if (!courier) throw new AppError(status.NOT_FOUND, 'Courier profile not found.');
+  if (courier.approvalStatus !== 'APPROVED') throw new AppError(status.FORBIDDEN, 'Your courier account is not approved yet.');
+
+  return prisma.courier.update({
+    where: { userId },
+    data: { availability: !courier.availability },
+    include: { user: { select: { id: true, name: true, email: true } } },
+  });
+};
+
+export const CourierService = { createCourier, getAllCouriers, getCourierById, getMyCourierProfile, updateCourier, deleteCourier, approveCourier, toggleAvailability };

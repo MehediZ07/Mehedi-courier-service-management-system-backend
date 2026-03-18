@@ -43,6 +43,16 @@ const updateShipmentStatus = catchAsync(async (req, res) => {
   sendResponse(res, { httpStatusCode: status.OK, success: true, message: 'Shipment status updated.', data: result });
 });
 
+const getAvailableShipments = catchAsync(async (req, res) => {
+  const result = await ShipmentService.getAvailableShipments(req.query as Record<string, string>);
+  sendResponse(res, { httpStatusCode: status.OK, success: true, message: 'Available shipments fetched.', data: result.data, meta: result.meta });
+});
+
+const acceptShipment = catchAsync(async (req, res) => {
+  const result = await ShipmentService.acceptShipment(req.params.id as string, req.user!.userId);
+  sendResponse(res, { httpStatusCode: status.OK, success: true, message: 'Shipment accepted successfully.', data: result });
+});
+
 export const ShipmentController = {
   createShipment,
   getAllShipments,
@@ -52,4 +62,6 @@ export const ShipmentController = {
   trackShipment,
   assignCourier,
   updateShipmentStatus,
+  getAvailableShipments,
+  acceptShipment,
 };
