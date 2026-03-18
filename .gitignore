@@ -1,8 +1,44 @@
-node_modules
+# Dependencies
+node_modules/
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Environment variables
 .env
-.env.*
+.env.local
+.env.*.local
 !.env.example
-dist
 
-/src/generated
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
 
+# Prisma
+/src/app/generated/
+prisma/*.db
+prisma/*.db-journal
+*.tmp*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Temporary files
+.cache/
+.temp/
