@@ -18,8 +18,8 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'x-refresh-token'],
 }));
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb', type: ['application/json', 'text/plain'] }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 app.use('/api/v1', IndexRoutes);
