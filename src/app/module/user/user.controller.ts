@@ -18,6 +18,18 @@ const updateUser = catchAsync(async (req, res) => {
   sendResponse(res, { httpStatusCode: status.OK, success: true, message: 'User updated.', data: result });
 });
 
+const uploadProfileImage = catchAsync(async (req, res) => {
+  if (!req.file) {
+    return sendResponse(res, { httpStatusCode: status.BAD_REQUEST, success: false, message: 'No file uploaded.' });
+  }
+
+  const imageUrl = req.file.path;
+  const user = await UserService.getUserById(req.params.id as string);
+  const result = await UserService.updateUserProfileImage(req.params.id as string, imageUrl, user.profileImage || undefined);
+
+  sendResponse(res, { httpStatusCode: status.OK, success: true, message: 'Profile image uploaded.', data: result });
+});
+
 const updateStatus = catchAsync(async (req, res) => {
   const result = await UserService.updateStatus(req.params.id as string, req.body.status);
   sendResponse(res, { httpStatusCode: status.OK, success: true, message: 'User status updated.', data: result });
@@ -33,4 +45,4 @@ const deleteUser = catchAsync(async (req, res) => {
   sendResponse(res, { httpStatusCode: status.OK, success: true, message: 'User deleted.' });
 });
 
-export const UserController = { getAllUsers, getUserById, updateUser, updateStatus, updateRole, deleteUser };
+export const UserController = { getAllUsers, getUserById, updateUser, uploadProfileImage, updateStatus, updateRole, deleteUser };

@@ -4,6 +4,7 @@ import { prisma } from '../../lib/prisma';
 import { QueryBuilder } from '../../utils/QueryBuilder';
 import { IQueryParams } from '../../interfaces/query.interface';
 import { Role, UserStatus } from '../../generated/prisma';
+import { deleteFileFromCloudinary } from '../../config/cloudinary.config';
 
 const getAllUsers = async (queryParams: IQueryParams) => {
   return new QueryBuilder(prisma.user, queryParams, {
@@ -20,17 +21,29 @@ const getAllUsers = async (queryParams: IQueryParams) => {
 const getUserById = async (id: string) => {
   const user = await prisma.user.findUnique({
     where: { id },
-    select: { id: true, name: true, email: true, role: true, phone: true, status: true, createdAt: true },
+    select: { id: true, name: true, email: true, role: true, phone: true, profileImage: true, status: true, createdAt: true },
   });
   if (!user) throw new AppError(status.NOT_FOUND, 'User not found.');
   return user;
 };
 
-const updateUser = async (id: string, payload: { name?: string; phone?: string }) => {
+const updateUser = async (id: string, payload: { name?: string; phone?: string; profileImage?: string }) => {
   return prisma.user.update({
     where: { id },
     data: payload,
-    select: { id: true, name: true, email: true, role: true, phone: true, status: true },
+    select: { id: true, name: true, email: true, role: true, phone: true, profileImage: true, status: true },
+  });
+};
+
+const updateUserProfileImage = async (id: string, imageUrl: string, oldImageUrl?: string) => {
+  if (oldImageUrl) {
+    await deleteFileFromCloudinary(oldImageUrl);
+  }
+
+  return prisma.user.update({
+    where: { id },
+    data: { profileImage: imageUrl },
+    select: { id: true, name: true, email: true, profileImage: true },
   });
 };
 
@@ -43,7 +56,11 @@ const updateRole = async (id: string, role: Role) => {
 };
 
 const deleteUser = async (id: string) => {
+  const user = await prisma.user.findUnique({ where: { id } });
+  if (user?.profileImage) {
+    await deleteFileFromCloudinary(user.profileImage);
+  }
   await prisma.user.delete({ where: { id } });
 };
 
-export const UserService = { getAllUsers, getUserById, updateUser, updateStatus, updateRole, deleteUser };
+export const UserService = { getAllUsers, getUserById, updateUser, updateUserProfileImage, updateStatus, updateRole, deleteUser };

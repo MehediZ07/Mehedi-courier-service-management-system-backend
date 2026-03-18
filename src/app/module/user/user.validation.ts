@@ -3,6 +3,7 @@ import z from 'zod';
 const updateUser = z.object({
   name: z.string().min(2).optional(),
   phone: z.string().optional(),
+  profileImage: z.string().optional(),
 });
 
 const updateStatus = z.object({
