@@ -1,0 +1,25 @@
+model Shipment {
+  id              String         @id @default(uuid())
+  trackingNumber  String         @unique
+  senderId        String
+  merchantId      String?
+  courierId       String?
+  pickupAddress   String
+  deliveryAddress String
+  packageType     String
+  weight          Float
+  priority        Priority       @default(STANDARD)
+  status          ShipmentStatus @default(PENDING)
+  paymentStatus   PaymentStatus  @default(PENDING)
+  proofOfDelivery String?
+  note            String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  sender        User            @relation("Sender", fields: [senderId], references: [id])
+  merchant      Merchant?       @relation(fields: [merchantId], references: [id])
+  courier       Courier?        @relation(fields: [courierId], references: [id])
+  payment       Payment?
+  notifications Notification[]
+  events        ShipmentEvent[]
+}
