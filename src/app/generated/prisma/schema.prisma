@@ -1,0 +1,165 @@
+model Courier {
+  id            String      @id @default(uuid())
+  userId        String      @unique
+  vehicleType   VehicleType
+  licenseNumber String
+  availability  Boolean     @default(true)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  user      User       @relation(fields: [userId], references: [id])
+  shipments Shipment[]
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  COURIER
+  MERCHANT
+  USER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum ShipmentStatus {
+  PENDING
+  ASSIGNED
+  PICKED_UP
+  IN_TRANSIT
+  OUT_FOR_DELIVERY
+  DELIVERED
+  FAILED
+  RETURNED
+}
+
+enum Priority {
+  STANDARD
+  EXPRESS
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  COD
+  FAILED
+}
+
+enum PaymentMethod {
+  STRIPE
+  SSLCOMMERZ
+  COD
+}
+
+enum VehicleType {
+  BIKE
+  BICYCLE
+  CAR
+  VAN
+  TRUCK
+}
+
+model Merchant {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  companyName String
+  address     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user      User       @relation(fields: [userId], references: [id])
+  shipments Shipment[]
+}
+
+model Notification {
+  id         String   @id @default(uuid())
+  shipmentId String
+  userId     String
+  role       Role
+  message    String
+  readStatus Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  shipment Shipment @relation(fields: [shipmentId], references: [id])
+  user     User     @relation(fields: [userId], references: [id])
+}
+
+model Payment {
+  id            String        @id @default(uuid())
+  shipmentId    String        @unique
+  amount        Float
+  method        PaymentMethod
+  status        PaymentStatus @default(PENDING)
+  transactionId String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  shipment Shipment @relation(fields: [shipmentId], references: [id])
+}
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../src/app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Shipment {
+  id              String         @id @default(uuid())
+  trackingNumber  String         @unique
+  senderId        String
+  merchantId      String?
+  courierId       String?
+  pickupAddress   String
+  deliveryAddress String
+  packageType     String
+  weight          Float
+  priority        Priority       @default(STANDARD)
+  status          ShipmentStatus @default(PENDING)
+  paymentStatus   PaymentStatus  @default(PENDING)
+  proofOfDelivery String?
+  note            String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  sender        User            @relation("Sender", fields: [senderId], references: [id])
+  merchant      Merchant?       @relation(fields: [merchantId], references: [id])
+  courier       Courier?        @relation(fields: [courierId], references: [id])
+  payment       Payment?
+  notifications Notification[]
+  events        ShipmentEvent[]
+}
+
+model ShipmentEvent {
+  id         String         @id @default(uuid())
+  shipmentId String
+  status     ShipmentStatus
+  updatedBy  String
+  note       String?
+  timestamp  DateTime       @default(now())
+
+  shipment Shipment @relation(fields: [shipmentId], references: [id])
+}
+
+model User {
+  id        String     @id @default(uuid())
+  name      String
+  email     String     @unique
+  password  String
+  phone     String?
+  role      Role       @default(USER)
+  status    UserStatus @default(ACTIVE)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  courier       Courier?
+  merchant      Merchant?
+  shipmentsSent Shipment[]     @relation("Sender")
+  notifications Notification[]
+}
