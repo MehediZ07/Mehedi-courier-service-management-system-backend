@@ -1,0 +1,10 @@
+model ShipmentEvent {
+  id         String         @id @default(uuid())
+  shipmentId String
+  status     ShipmentStatus
+  updatedBy  String
+  note       String?
+  timestamp  DateTime       @default(now())
+
+  shipment Shipment @relation(fields: [shipmentId], references: [id])
+}
