@@ -1,0 +1,50 @@
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  COURIER
+  MERCHANT
+  USER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum ShipmentStatus {
+  PENDING
+  ASSIGNED
+  PICKED_UP
+  IN_TRANSIT
+  OUT_FOR_DELIVERY
+  DELIVERED
+  FAILED
+  RETURNED
+}
+
+enum Priority {
+  STANDARD
+  EXPRESS
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  COD
+  FAILED
+}
+
+enum PaymentMethod {
+  STRIPE
+  SSLCOMMERZ
+  COD
+}
+
+enum VehicleType {
+  BIKE
+  BICYCLE
+  CAR
+  VAN
+  TRUCK
+}
