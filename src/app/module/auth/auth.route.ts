@@ -10,6 +10,7 @@ router.post('/register', validateRequest(AuthValidation.register), AuthControlle
 router.post('/register-courier', validateRequest(AuthValidation.registerCourier), AuthController.registerCourier);
 router.post('/login', validateRequest(AuthValidation.login), AuthController.login);
 router.post('/refresh-token', AuthController.refreshToken);
+router.post('/logout', checkAuth(), AuthController.logout);
 router.post('/change-password', checkAuth(), validateRequest(AuthValidation.changePassword), AuthController.changePassword);
 router.get('/me', checkAuth(), AuthController.getMe);
 

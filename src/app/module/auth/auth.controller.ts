@@ -20,7 +20,7 @@ const login = catchAsync(async (req, res) => {
 });
 
 const refreshToken = catchAsync(async (req, res) => {
-  const token = req.headers['x-refresh-token'] as string;
+  const token = req.headers['x-refresh-token'] as string || req.cookies?.refreshToken;
   const result = await AuthService.refreshToken(token);
   sendResponse(res, { httpStatusCode: status.OK, success: true, message: 'Token refreshed.', data: result });
 });
@@ -36,4 +36,8 @@ const getMe = catchAsync(async (req, res) => {
   sendResponse(res, { httpStatusCode: status.OK, success: true, message: 'Profile fetched.', data: result });
 });
 
-export const AuthController = { register, registerCourier, login, refreshToken, changePassword, getMe };
+const logout = catchAsync(async (req, res) => {
+  sendResponse(res, { httpStatusCode: status.OK, success: true, message: 'Logged out successfully.' });
+});
+
+export const AuthController = { register, registerCourier, login, refreshToken, changePassword, getMe, logout };
