@@ -23,9 +23,25 @@ const uploadProfileImage = catchAsync(async (req, res) => {
     return sendResponse(res, { httpStatusCode: status.BAD_REQUEST, success: false, message: 'No file uploaded.' });
   }
 
+  const targetUserId = req.params.id as string;
+  const currentUserId = req.user!.userId;
+  const currentUserRole = req.user!.role;
+
+  // Check if user is uploading their own profile or is an admin
+  const isAdmin = currentUserRole === 'SUPER_ADMIN' || currentUserRole === 'ADMIN';
+  const isOwnProfile = targetUserId === currentUserId;
+
+  if (!isAdmin && !isOwnProfile) {
+    return sendResponse(res, { 
+      httpStatusCode: status.FORBIDDEN, 
+      success: false, 
+      message: 'You can only upload your own profile image.' 
+    });
+  }
+
   const imageUrl = req.file.path;
-  const user = await UserService.getUserById(req.params.id as string);
-  const result = await UserService.updateUserProfileImage(req.params.id as string, imageUrl, user.profileImage || undefined);
+  const user = await UserService.getUserById(targetUserId);
+  const result = await UserService.updateUserProfileImage(targetUserId, imageUrl, user.profileImage || undefined);
 
   sendResponse(res, { httpStatusCode: status.OK, success: true, message: 'Profile image uploaded.', data: result });
 });
