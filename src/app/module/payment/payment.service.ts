@@ -31,33 +31,50 @@ const initiateStripePayment = async (shipmentId: string, amount: number, email: 
   if (payment.status === 'PAID') throw new AppError(status.BAD_REQUEST, 'Payment already completed.');
 
   try {
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100),
-      currency: 'usd',
-      receipt_email: email,
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price_data: {
+            currency: 'bdt',
+            product_data: {
+              name: 'Shipment Delivery Fee',
+              description: `Shipment ID: ${shipmentId}`,
+            },
+            unit_amount: Math.round(amount * 100),
+          },
+          quantity: 1,
+        },
+      ],
+      mode: 'payment',
+      success_url: `${process.env.FRONTEND_URL}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.FRONTEND_URL}/payment/cancel`,
+      customer_email: email,
       metadata: { shipmentId },
     });
 
     await prisma.payment.update({
       where: { shipmentId },
-      data: { transactionId: paymentIntent.id },
+      data: { transactionId: session.id },
     });
 
     return {
-      clientSecret: paymentIntent.client_secret,
-      paymentIntentId: paymentIntent.id,
+      sessionId: session.id,
+      url: session.url,
     };
   } catch (error: any) {
     throw new AppError(status.BAD_REQUEST, `Stripe error: ${error.message}`);
   }
 };
 
-const confirmStripePayment = async (paymentIntentId: string) => {
+const confirmStripePayment = async (sessionId: string) => {
   try {
-    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
 
-    if (paymentIntent.status === 'succeeded') {
-      const shipmentId = paymentIntent.metadata.shipmentId;
+    if (session.payment_status === 'paid') {
+      const shipmentId = session.metadata?.shipmentId;
+      if (!shipmentId) throw new AppError(status.BAD_REQUEST, 'Invalid session metadata.');
+      
       const payment = await prisma.payment.findUnique({ where: { shipmentId } });
 
       if (payment) {

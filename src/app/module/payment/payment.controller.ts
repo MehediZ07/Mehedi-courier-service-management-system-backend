@@ -22,8 +22,8 @@ const initiateStripePayment = catchAsync(async (req, res) => {
 });
 
 const confirmStripePayment = catchAsync(async (req, res) => {
-  const { paymentIntentId } = req.body;
-  const result = await PaymentService.confirmStripePayment(paymentIntentId);
+  const { sessionId } = req.body;
+  const result = await PaymentService.confirmStripePayment(sessionId);
   sendResponse(res, { httpStatusCode: status.OK, success: true, message: 'Payment confirmed.', data: result });
 });
 
