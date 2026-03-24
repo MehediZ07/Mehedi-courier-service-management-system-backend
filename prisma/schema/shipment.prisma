@@ -6,8 +6,10 @@ model Shipment {
   courierId       String?
   pickupAddress   String
   pickupCity      String
+  pickupPhone     String         @default("")
   deliveryAddress String
   deliveryCity    String
+  deliveryPhone   String         @default("")
   packageType     String
   weight          Float
   priority        Priority       @default(STANDARD)
