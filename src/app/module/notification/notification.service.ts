@@ -2,15 +2,17 @@ import { prisma } from '../../lib/prisma.js';
 import { QueryBuilder } from '../../utils/QueryBuilder.js';
 import { IQueryParams } from '../../interfaces/query.interface.js';
 
-const getMyNotifications = async (userId: string, queryParams: IQueryParams) => {
+const getMyNotifications = async (userId: string, queryParams: IQueryParams, userRole?: string) => {
+  const isAdmin = userRole === 'SUPER_ADMIN' || userRole === 'ADMIN';
+  
   return new QueryBuilder(prisma.notification, queryParams, {
     filterableFields: ['readStatus'],
   })
     .filter()
     .sort()
     .paginate()
-    .where({ userId })
-    .include({ shipment: { select: { trackingNumber: true, status: true } } })
+    .where(isAdmin ? {} : { userId })
+    .include({ shipment: { select: { trackingNumber: true, status: true } }, user: { select: { name: true, email: true } } })
     .execute();
 };
 

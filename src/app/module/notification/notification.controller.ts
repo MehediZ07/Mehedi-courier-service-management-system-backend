@@ -4,7 +4,7 @@ import { sendResponse } from '../../shared/sendResponse.js';
 import { NotificationService } from './notification.service.js';
 
 const getMyNotifications = catchAsync(async (req, res) => {
-  const result = await NotificationService.getMyNotifications(req.user!.userId, req.query as Record<string, string>);
+  const result = await NotificationService.getMyNotifications(req.user!.userId, req.query as Record<string, string>, req.user!.role);
   sendResponse(res, { httpStatusCode: status.OK, success: true, message: 'Notifications fetched.', data: result.data, meta: result.meta });
 });
 
