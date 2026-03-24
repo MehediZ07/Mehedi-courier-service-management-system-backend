@@ -12,10 +12,16 @@ const app: Application = express();
 app.set('query parser', (str: string) => qs.parse(str));
 
 app.use(cors({
-  origin: [envVars.FRONTEND_URL, 'http://localhost:3000', 'http://localhost:5000'],
+  origin: [
+    envVars.FRONTEND_URL,
+    'http://localhost:3000',
+    'http://localhost:4000',
+    'https://swiftship-frontendv1.vercel.app'
+  ],
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-refresh-token'],
+  exposedHeaders: ['x-refresh-token'],
 }));
 
 app.use(express.json({ limit: '10mb', type: ['application/json', 'text/plain'] }));

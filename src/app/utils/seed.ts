@@ -2,7 +2,6 @@ import bcrypt from 'bcryptjs';
 import { Role } from '@prisma/client';
 import { envVars } from '../config/env.js';
 import { prisma } from '../lib/prisma.js';
-import { jwtUtils } from '../utils/jwt.js';
 
 export const seedSuperAdmin = async () => {
   try {
