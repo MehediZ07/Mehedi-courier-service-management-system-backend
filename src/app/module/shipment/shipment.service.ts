@@ -24,8 +24,10 @@ const createShipment = async (
   payload: {
     pickupAddress: string;
     pickupCity: string;
+    pickupPhone: string;
     deliveryAddress: string;
     deliveryCity: string;
+    deliveryPhone: string;
     packageType: string;
     weight: number;
     priority?: Priority;
@@ -56,8 +58,10 @@ const createShipment = async (
         merchantId,
         pickupAddress: payload.pickupAddress,
         pickupCity: payload.pickupCity,
+        pickupPhone: payload.pickupPhone,
         deliveryAddress: payload.deliveryAddress,
         deliveryCity: payload.deliveryCity,
+        deliveryPhone: payload.deliveryPhone,
         packageType: payload.packageType,
         weight: payload.weight,
         priority,
