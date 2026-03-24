@@ -14,4 +14,5 @@ declare module 'multer-storage-cloudinary' {
   }
 
   export { CloudinaryStorage };
+  export default CloudinaryStorage;
 }

@@ -1,6 +1,6 @@
-import app from './app';
-import { envVars } from './app/config/env';
-import { seedSuperAdmin } from './app/utils/seed';
+import app from './app.js';
+import { envVars } from './app/config/env.js';
+import { seedSuperAdmin } from './app/utils/seed.js';
 
 const bootstrap = async () => {
   try {

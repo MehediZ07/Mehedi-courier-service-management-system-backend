@@ -1,7 +1,7 @@
 import status from 'http-status';
-import { catchAsync } from '../../shared/catchAsync';
-import { sendResponse } from '../../shared/sendResponse';
-import { AuthService } from './auth.service';
+import { catchAsync } from '../../shared/catchAsync.js';
+import { sendResponse } from '../../shared/sendResponse.js';
+import { AuthService } from './auth.service.js';
 
 const register = catchAsync(async (req, res) => {
   const result = await AuthService.register(req.body);

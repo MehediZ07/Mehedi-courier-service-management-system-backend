@@ -1,10 +1,11 @@
 import { v4 as uuidv4 } from 'uuid';
 import status from 'http-status';
-import AppError from '../../errorHelpers/AppError';
-import { prisma } from '../../lib/prisma';
-import { QueryBuilder } from '../../utils/QueryBuilder';
-import { IQueryParams } from '../../interfaces/query.interface';
-import { PaymentMethod, Priority, Role, ShipmentStatus } from '../../generated/prisma';
+import AppError from '../../errorHelpers/AppError.js';
+import { prisma } from '../../lib/prisma.js';
+import { QueryBuilder } from '../../utils/QueryBuilder.js';
+import { IQueryParams } from '../../interfaces/query.interface.js';
+import { PaymentMethod, Priority, Role, ShipmentStatus } from '@prisma/client';
+import { computePrice, detectRegionType } from '../pricing/pricing.service.js';
 
 const generateTrackingNumber = () => `TRK-${uuidv4().split('-')[0].toUpperCase()}-${Date.now()}`;
 
@@ -13,6 +14,7 @@ const shipmentInclude = {
   merchant: { select: { id: true, companyName: true } },
   courier: { include: { user: { select: { id: true, name: true, phone: true } } } },
   payment: true,
+  pricing: true,
   events: { orderBy: { timestamp: 'desc' as const } },
 };
 
@@ -21,16 +23,24 @@ const createShipment = async (
   senderRole: Role,
   payload: {
     pickupAddress: string;
+    pickupCity: string;
     deliveryAddress: string;
+    deliveryCity: string;
     packageType: string;
     weight: number;
     priority?: Priority;
     paymentMethod: PaymentMethod;
-    amount: number;
     note?: string;
   },
 ) => {
   const trackingNumber = generateTrackingNumber();
+  const priority = payload.priority ?? Priority.STANDARD;
+  const regionType = detectRegionType(payload.pickupCity, payload.deliveryCity);
+
+  const pricingConfig = await prisma.pricing.findUnique({ where: { regionType } });
+  if (!pricingConfig) throw new AppError(status.BAD_REQUEST, `No pricing configured for region: ${regionType}`);
+
+  const { basePrice, weightCharge, priorityCharge, totalPrice } = computePrice(pricingConfig, payload.weight, priority);
 
   let merchantId: string | undefined;
   if (senderRole === Role.MERCHANT) {
@@ -45,10 +55,12 @@ const createShipment = async (
         senderId,
         merchantId,
         pickupAddress: payload.pickupAddress,
+        pickupCity: payload.pickupCity,
         deliveryAddress: payload.deliveryAddress,
+        deliveryCity: payload.deliveryCity,
         packageType: payload.packageType,
         weight: payload.weight,
-        priority: payload.priority ?? Priority.STANDARD,
+        priority,
         paymentStatus: payload.paymentMethod === PaymentMethod.COD ? 'COD' : 'PENDING',
         note: payload.note,
       },
@@ -58,10 +70,14 @@ const createShipment = async (
     await tx.payment.create({
       data: {
         shipmentId: shipment.id,
-        amount: payload.amount,
+        amount: totalPrice,
         method: payload.paymentMethod,
         status: payload.paymentMethod === PaymentMethod.COD ? 'COD' : 'PENDING',
       },
+    });
+
+    await tx.shipmentPricing.create({
+      data: { shipmentId: shipment.id, regionType, basePrice, weightCharge, priorityCharge, totalPrice },
     });
 
     await tx.shipmentEvent.create({

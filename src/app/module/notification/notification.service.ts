@@ -1,6 +1,6 @@
-import { prisma } from '../../lib/prisma';
-import { QueryBuilder } from '../../utils/QueryBuilder';
-import { IQueryParams } from '../../interfaces/query.interface';
+import { prisma } from '../../lib/prisma.js';
+import { QueryBuilder } from '../../utils/QueryBuilder.js';
+import { IQueryParams } from '../../interfaces/query.interface.js';
 
 const getMyNotifications = async (userId: string, queryParams: IQueryParams) => {
   return new QueryBuilder(prisma.notification, queryParams, {

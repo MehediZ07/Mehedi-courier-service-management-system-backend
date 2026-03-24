@@ -1,9 +1,9 @@
 import status from 'http-status';
-import AppError from '../../errorHelpers/AppError';
-import { prisma } from '../../lib/prisma';
-import { QueryBuilder } from '../../utils/QueryBuilder';
-import { IQueryParams } from '../../interfaces/query.interface';
-import { VehicleType } from '../../generated/prisma';
+import AppError from '../../errorHelpers/AppError.js';
+import { prisma } from '../../lib/prisma.js';
+import { QueryBuilder } from '../../utils/QueryBuilder.js';
+import { IQueryParams } from '../../interfaces/query.interface.js';
+import { VehicleType } from '@prisma/client';
 
 const createCourier = async (payload: { userId: string; vehicleType: VehicleType; licenseNumber: string }) => {
   const user = await prisma.user.findUnique({ where: { id: payload.userId } });

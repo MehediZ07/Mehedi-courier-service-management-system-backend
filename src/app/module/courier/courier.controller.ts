@@ -1,7 +1,7 @@
 import status from 'http-status';
-import { catchAsync } from '../../shared/catchAsync';
-import { sendResponse } from '../../shared/sendResponse';
-import { CourierService } from './courier.service';
+import { catchAsync } from '../../shared/catchAsync.js';
+import { sendResponse } from '../../shared/sendResponse.js';
+import { CourierService } from './courier.service.js';
 
 const createCourier = catchAsync(async (req, res) => {
   const result = await CourierService.createCourier(req.body);

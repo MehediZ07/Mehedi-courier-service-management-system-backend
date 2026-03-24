@@ -2,12 +2,13 @@ import z from 'zod';
 
 const create = z.object({
   pickupAddress: z.string().min(5),
+  pickupCity: z.string().min(1),
   deliveryAddress: z.string().min(5),
+  deliveryCity: z.string().min(1),
   packageType: z.string().min(1),
   weight: z.number().positive(),
   priority: z.enum(['STANDARD', 'EXPRESS']).optional().default('STANDARD'),
   paymentMethod: z.enum(['STRIPE', 'SSLCOMMERZ', 'COD']),
-  amount: z.number().positive(),
   note: z.string().optional(),
 });
 

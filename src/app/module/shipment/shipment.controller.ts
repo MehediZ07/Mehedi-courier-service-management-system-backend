@@ -1,7 +1,7 @@
 import status from 'http-status';
-import { catchAsync } from '../../shared/catchAsync';
-import { sendResponse } from '../../shared/sendResponse';
-import { ShipmentService } from './shipment.service';
+import { catchAsync } from '../../shared/catchAsync.js';
+import { sendResponse } from '../../shared/sendResponse.js';
+import { ShipmentService } from './shipment.service.js';
 
 const createShipment = catchAsync(async (req, res) => {
   const result = await ShipmentService.createShipment(req.user!.userId, req.user!.role, req.body);

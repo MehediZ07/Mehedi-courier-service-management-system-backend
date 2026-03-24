@@ -2,10 +2,10 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express, { Application, Request, Response } from 'express';
 import qs from 'qs';
-import { envVars } from './app/config/env';
-import { globalErrorHandler } from './app/middleware/globalErrorHandler';
-import { notFound } from './app/middleware/notFound';
-import { IndexRoutes } from './app/routes';
+import { envVars } from './app/config/env.js';
+import { globalErrorHandler } from './app/middleware/globalErrorHandler.js';
+import { notFound } from './app/middleware/notFound.js';
+import { IndexRoutes } from './app/routes/index.js';
 
 const app: Application = express();
 

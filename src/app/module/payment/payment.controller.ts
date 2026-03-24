@@ -1,7 +1,7 @@
 import status from 'http-status';
-import { catchAsync } from '../../shared/catchAsync';
-import { sendResponse } from '../../shared/sendResponse';
-import { PaymentService } from './payment.service';
+import { catchAsync } from '../../shared/catchAsync.js';
+import { sendResponse } from '../../shared/sendResponse.js';
+import { PaymentService } from './payment.service.js';
 
 const getAllPayments = catchAsync(async (req, res) => {
   const result = await PaymentService.getAllPayments(req.query as Record<string, string>);

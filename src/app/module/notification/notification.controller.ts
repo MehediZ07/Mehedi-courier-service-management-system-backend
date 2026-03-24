@@ -1,7 +1,7 @@
 import status from 'http-status';
-import { catchAsync } from '../../shared/catchAsync';
-import { sendResponse } from '../../shared/sendResponse';
-import { NotificationService } from './notification.service';
+import { catchAsync } from '../../shared/catchAsync.js';
+import { sendResponse } from '../../shared/sendResponse.js';
+import { NotificationService } from './notification.service.js';
 
 const getMyNotifications = catchAsync(async (req, res) => {
   const result = await NotificationService.getMyNotifications(req.user!.userId, req.query as Record<string, string>);

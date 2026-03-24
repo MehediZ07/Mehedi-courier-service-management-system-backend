@@ -1,0 +1,23 @@
+model Pricing {
+  id          String     @id @default(uuid())
+  regionType  RegionType @unique
+  basePrice   Float
+  perKgPrice  Float
+  expressMult Float      @default(1.2) // multiplier e.g. 1.2 = +20%
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model ShipmentPricing {
+  id              String     @id @default(uuid())
+  shipmentId      String     @unique
+  regionType      RegionType
+  basePrice       Float
+  weightCharge    Float
+  priorityCharge  Float
+  totalPrice      Float
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  shipment Shipment @relation(fields: [shipmentId], references: [id])
+}

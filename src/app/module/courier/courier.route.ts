@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import { checkAuth } from '../../middleware/checkAuth';
-import { validateRequest } from '../../middleware/validateRequest';
-import { CourierController } from './courier.controller';
-import { CourierValidation } from './courier.validation';
+import { checkAuth } from '../../middleware/checkAuth.js';
+import { validateRequest } from '../../middleware/validateRequest.js';
+import { CourierController } from './courier.controller.js';
+import { CourierValidation } from './courier.validation.js';
 
 const router = Router();
 

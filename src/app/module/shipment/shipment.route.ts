@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import { checkAuth } from '../../middleware/checkAuth';
-import { validateRequest } from '../../middleware/validateRequest';
-import { ShipmentController } from './shipment.controller';
-import { ShipmentValidation } from './shipment.validation';
+import { checkAuth } from '../../middleware/checkAuth.js';
+import { validateRequest } from '../../middleware/validateRequest.js';
+import { ShipmentController } from './shipment.controller.js';
+import { ShipmentValidation } from './shipment.validation.js';
 
 const router = Router();
 

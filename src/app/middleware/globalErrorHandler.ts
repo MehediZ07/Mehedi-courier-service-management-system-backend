@@ -2,10 +2,10 @@
 import { NextFunction, Request, Response } from 'express';
 import status from 'http-status';
 import z from 'zod';
-import { envVars } from '../config/env';
-import AppError from '../errorHelpers/AppError';
-import { handleZodError } from '../errorHelpers/handleZodError';
-import { TErrorResponse, TErrorSources } from '../interfaces/error.interface';
+import { envVars } from '../config/env.js';
+import AppError from '../errorHelpers/AppError.js';
+import { handleZodError } from '../errorHelpers/handleZodError.js';
+import { TErrorResponse, TErrorSources } from '../interfaces/error.interface.js';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const globalErrorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {

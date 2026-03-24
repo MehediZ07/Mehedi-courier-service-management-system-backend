@@ -54,3 +54,9 @@ enum VehicleType {
   VAN
   TRUCK
 }
+
+enum RegionType {
+  LOCAL
+  NATIONAL
+  INTERNATIONAL
+}

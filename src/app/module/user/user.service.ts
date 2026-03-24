@@ -1,10 +1,10 @@
 import status from 'http-status';
-import AppError from '../../errorHelpers/AppError';
-import { prisma } from '../../lib/prisma';
-import { QueryBuilder } from '../../utils/QueryBuilder';
-import { IQueryParams } from '../../interfaces/query.interface';
-import { Role, UserStatus } from '../../generated/prisma';
-import { deleteFileFromCloudinary } from '../../config/cloudinary.config';
+import AppError from '../../errorHelpers/AppError.js';
+import { prisma } from '../../lib/prisma.js';
+import { QueryBuilder } from '../../utils/QueryBuilder.js';
+import { IQueryParams } from '../../interfaces/query.interface.js';
+import { Role, UserStatus } from '@prisma/client';
+import { deleteFileFromCloudinary } from '../../config/cloudinary.config.js';
 
 const getAllUsers = async (queryParams: IQueryParams) => {
   return new QueryBuilder(prisma.user, queryParams, {

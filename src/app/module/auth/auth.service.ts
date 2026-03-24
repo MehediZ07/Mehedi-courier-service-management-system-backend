@@ -1,10 +1,10 @@
 import bcrypt from 'bcryptjs';
 import status from 'http-status';
-import AppError from '../../errorHelpers/AppError';
-import { prisma } from '../../lib/prisma';
-import { jwtUtils } from '../../utils/jwt';
-import { envVars } from '../../config/env';
-import { Role } from '../../generated/prisma';
+import AppError from '../../errorHelpers/AppError.js';
+import { prisma } from '../../lib/prisma.js';
+import { jwtUtils } from '../../utils/jwt.js';
+import { envVars } from '../../config/env.js';
+import { Role } from '@prisma/client';
 
 const register = async (payload: { name: string; email: string; password: string; phone?: string; role?: 'USER' | 'MERCHANT' }) => {
   const existing = await prisma.user.findUnique({ where: { email: payload.email.toLowerCase() } });

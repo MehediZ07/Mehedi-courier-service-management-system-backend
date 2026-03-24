@@ -5,7 +5,9 @@ model Shipment {
   merchantId      String?
   courierId       String?
   pickupAddress   String
+  pickupCity      String
   deliveryAddress String
+  deliveryCity    String
   packageType     String
   weight          Float
   priority        Priority       @default(STANDARD)
@@ -20,6 +22,7 @@ model Shipment {
   merchant      Merchant?       @relation(fields: [merchantId], references: [id])
   courier       Courier?        @relation(fields: [courierId], references: [id])
   payment       Payment?
+  pricing       ShipmentPricing?
   notifications Notification[]
   events        ShipmentEvent[]
 }

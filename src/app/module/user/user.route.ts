@@ -1,9 +1,9 @@
 import { Router } from 'express';
-import { checkAuth } from '../../middleware/checkAuth';
-import { validateRequest } from '../../middleware/validateRequest';
-import { uploadSingle } from '../../config/multer.config';
-import { UserController } from './user.controller';
-import { UserValidation } from './user.validation';
+import { checkAuth } from '../../middleware/checkAuth.js';
+import { validateRequest } from '../../middleware/validateRequest.js';
+import { uploadSingle } from '../../config/multer.config.js';
+import { UserController } from './user.controller.js';
+import { UserValidation } from './user.validation.js';
 
 const router = Router();
 
