@@ -7,6 +7,8 @@ import { ShipmentRoutes } from '../module/shipment/shipment.route.js';
 import { PaymentRoutes } from '../module/payment/payment.route.js';
 import { NotificationRoutes } from '../module/notification/notification.route.js';
 import { PricingRoutes } from '../module/pricing/pricing.route.js';
+import { HubRoutes } from '../module/hub/hub.route.js';
+import { ShipmentLegRoutes } from '../module/shipmentLeg/shipmentLeg.route.js';
 
 const router = Router();
 
@@ -18,5 +20,7 @@ router.use('/shipments', ShipmentRoutes);
 router.use('/payments', PaymentRoutes);
 router.use('/notifications', NotificationRoutes);
 router.use('/pricing', PricingRoutes);
+router.use('/hubs', HubRoutes);
+router.use('/legs', ShipmentLegRoutes);
 
 export const IndexRoutes = router;

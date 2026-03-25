@@ -63,6 +63,9 @@ A production-ready, full-featured courier and delivery management system built w
 - Proof of delivery support
 - Shipment event logging
 - Advanced filtering and search
+- **Hub-based multi-leg delivery** — Scalable delivery system with hub network
+- **Automatic route planning** — System creates optimal delivery legs
+- **Leg-based courier workflow** — Couriers work locally within their area
 
 ### 💰 Dynamic Pricing Engine
 - **Region-based pricing** — LOCAL, NATIONAL, INTERNATIONAL tiers
@@ -281,6 +284,8 @@ Comprehensive API documentation is available in:
 | **Couriers** | `/api/v1/couriers/*` | Courier registration, approval, availability, profile |
 | **Merchants** | `/api/v1/merchants/*` | Merchant profile management |
 | **Shipments** | `/api/v1/shipments/*` | Create, track, assign, update shipments |
+| **Hubs** | `/api/v1/hubs/*` | Hub management, hub-based delivery network |
+| **Legs** | `/api/v1/legs/*` | Shipment leg operations, courier leg workflow |
 | **Payments** | `/api/v1/payments/*` | Payment processing, Stripe integration |
 | **Pricing** | `/api/v1/pricing/*` | Shipping rates, price quotes, admin configuration |
 | **Notifications** | `/api/v1/notifications/*` | User notifications, read status |
@@ -347,7 +352,7 @@ Courier
 ├── availability: Boolean
 ├── approvalStatus: ApprovalStatus (PENDING, APPROVED, REJECTED)
 ├── totalEarnings: Float
-└── Relations: User, Shipments
+└── Relations: User, Shipments, ShipmentLegs
 
 Shipment
 ├── id: String (UUID)
@@ -365,7 +370,37 @@ Shipment
 ├── status: ShipmentStatus (PENDING, ASSIGNED, PICKED_UP, IN_TRANSIT, OUT_FOR_DELIVERY, DELIVERED, FAILED, RETURNED)
 ├── paymentStatus: PaymentStatus (PENDING, PAID, COD, FAILED)
 ├── proofOfDelivery: String?
-└── Relations: Sender, Merchant, Courier, Payment, ShipmentPricing, Notifications, Events
+├── deliveryType: DeliveryType? (LEGACY_DIRECT, DIRECT, HUB_BASED)
+├── currentLegId: String?
+└── Relations: Sender, Merchant, Courier, Payment, ShipmentPricing, Notifications, Events, ShipmentLegs
+
+Hub
+├── id: String (UUID)
+├── name: String
+├── city: String
+├── address: String
+├── hubType: HubType (LOCAL, REGIONAL, INTERNATIONAL)
+├── isActive: Boolean
+└── Relations: ShipmentLegs (as origin/destination)
+
+ShipmentLeg
+├── id: String (UUID)
+├── shipmentId: String
+├── legNumber: Int
+├── legType: LegType (DIRECT, PICKUP, HUB_TRANSFER, DELIVERY)
+├── originType: LocationType (ADDRESS, HUB)
+├── originAddress: String?
+├── originHubId: String?
+├── destType: LocationType (ADDRESS, HUB)
+├── destAddress: String?
+├── destHubId: String?
+├── courierId: String?
+├── status: LegStatus (PENDING, ASSIGNED, IN_PROGRESS, COMPLETED, FAILED)
+├── assignedAt: DateTime?
+├── pickedUpAt: DateTime?
+├── deliveredAt: DateTime?
+├── estimatedAt: DateTime?
+└── Relations: Shipment, Courier, OriginHub, DestinationHub
 
 Payment
 ├── id: String (UUID)
@@ -521,6 +556,8 @@ L2B6A5-Backend-Management-System/
 │       ├── courier.prisma
 │       ├── merchant.prisma
 │       ├── shipment.prisma
+│       ├── hub.prisma        # Hub model for delivery network
+│       ├── shipmentLeg.prisma # Multi-leg delivery model
 │       ├── payment.prisma
 │       ├── pricing.prisma   # Pricing + ShipmentPricing models
 │       ├── shipmentEvent.prisma
@@ -538,6 +575,8 @@ L2B6A5-Backend-Management-System/
 │   │   │   ├── courier/
 │   │   │   ├── merchant/
 │   │   │   ├── shipment/
+│   │   │   ├── hub/
+│   │   │   ├── shipmentLeg/
 │   │   │   ├── payment/
 │   │   │   ├── pricing/
 │   │   │   └── notification/
@@ -717,6 +756,9 @@ This project is licensed under the ISC License.
 ## 🗺️ Roadmap
 
 - [x] Dynamic pricing engine (region + weight + priority)
+- [x] Hub-based multi-leg delivery system
+- [x] Automatic route planning
+- [x] Leg-based courier workflow
 - [ ] Real-time tracking with WebSockets
 - [ ] Mobile app (React Native)
 - [ ] Admin dashboard (React)
