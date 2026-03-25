@@ -1,0 +1,300 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  COURIER
+  MERCHANT
+  USER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ShipmentStatus {
+  PENDING
+  ASSIGNED
+  PICKED_UP
+  IN_TRANSIT
+  OUT_FOR_DELIVERY
+  DELIVERED
+  FAILED
+  RETURNED
+}
+
+enum Priority {
+  STANDARD
+  EXPRESS
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  COD
+  FAILED
+}
+
+enum PaymentMethod {
+  STRIPE
+  COD
+}
+
+enum VehicleType {
+  BIKE
+  BICYCLE
+  CAR
+  VAN
+  TRUCK
+}
+
+enum RegionType {
+  LOCAL
+  NATIONAL
+  INTERNATIONAL
+}
+
+enum HubType {
+  LOCAL
+  REGIONAL
+  INTERNATIONAL
+}
+
+enum LegType {
+  DIRECT
+  PICKUP
+  HUB_TRANSFER
+  DELIVERY
+}
+
+enum LegStatus {
+  PENDING
+  ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+enum LocationType {
+  ADDRESS
+  HUB
+}
+
+enum DeliveryType {
+  LEGACY_DIRECT
+  DIRECT
+  HUB_BASED
+}
+
+// ============================================
+// MODELS
+// ============================================
+
+model User {
+  id           String     @id @default(uuid())
+  name         String
+  email        String     @unique
+  password     String
+  phone        String?
+  profileImage String?
+  role         Role       @default(USER)
+  status       UserStatus @default(ACTIVE)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  courier       Courier?
+  merchant      Merchant?
+  shipmentsSent Shipment[]     @relation("Sender")
+  notifications Notification[]
+}
+
+model Courier {
+  id             String         @id @default(uuid())
+  userId         String         @unique
+  vehicleType    VehicleType
+  licenseNumber  String
+  city           String?
+  availability   Boolean        @default(true)
+  approvalStatus ApprovalStatus @default(PENDING)
+  totalEarnings  Float          @default(0)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  user      User          @relation(fields: [userId], references: [id])
+  shipments Shipment[]
+  legs      ShipmentLeg[]
+
+  @@index([city])
+}
+
+model Merchant {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  companyName String
+  address     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user      User       @relation(fields: [userId], references: [id])
+  shipments Shipment[]
+}
+
+model Hub {
+  id        String   @id @default(uuid())
+  name      String
+  city      String
+  address   String
+  hubType   HubType  @default(LOCAL)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  shipmentsIn  ShipmentLeg[] @relation("DestinationHub")
+  shipmentsOut ShipmentLeg[] @relation("OriginHub")
+}
+
+model Shipment {
+  id              String         @id @default(uuid())
+  trackingNumber  String         @unique
+  senderId        String
+  merchantId      String?
+  courierId       String?
+  pickupAddress   String
+  pickupCity      String
+  pickupPhone     String         @default("")
+  deliveryAddress String
+  deliveryCity    String
+  deliveryPhone   String         @default("")
+  packageType     String
+  weight          Float
+  priority        Priority       @default(STANDARD)
+  status          ShipmentStatus @default(PENDING)
+  paymentStatus   PaymentStatus  @default(PENDING)
+  proofOfDelivery String?
+  note            String?
+  deliveryType    DeliveryType?
+  currentLegId    String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  sender        User             @relation("Sender", fields: [senderId], references: [id])
+  merchant      Merchant?        @relation(fields: [merchantId], references: [id])
+  courier       Courier?         @relation(fields: [courierId], references: [id])
+  payment       Payment?
+  pricing       ShipmentPricing?
+  notifications Notification[]
+  events        ShipmentEvent[]
+  legs          ShipmentLeg[]
+}
+
+model ShipmentLeg {
+  id            String       @id @default(uuid())
+  shipmentId    String
+  legNumber     Int
+  legType       LegType
+  originType    LocationType
+  originAddress String?
+  originHubId   String?
+  destType      LocationType
+  destAddress   String?
+  destHubId     String?
+  courierId     String?
+  status        LegStatus    @default(PENDING)
+  assignedAt    DateTime?
+  pickedUpAt    DateTime?
+  deliveredAt   DateTime?
+  estimatedAt   DateTime?
+  note          String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  shipment  Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  courier   Courier? @relation(fields: [courierId], references: [id])
+  originHub Hub?     @relation("OriginHub", fields: [originHubId], references: [id])
+  destHub   Hub?     @relation("DestinationHub", fields: [destHubId], references: [id])
+
+  @@unique([shipmentId, legNumber])
+  @@index([shipmentId])
+  @@index([courierId])
+  @@index([status])
+}
+
+model Payment {
+  id            String        @id @default(uuid())
+  shipmentId    String        @unique
+  amount        Float
+  method        PaymentMethod
+  status        PaymentStatus @default(PENDING)
+  transactionId String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  shipment Shipment @relation(fields: [shipmentId], references: [id])
+}
+
+model Pricing {
+  id          String     @id @default(uuid())
+  regionType  RegionType @unique
+  basePrice   Float
+  perKgPrice  Float
+  expressMult Float      @default(1.2)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model ShipmentPricing {
+  id             String     @id @default(uuid())
+  shipmentId     String     @unique
+  regionType     RegionType
+  basePrice      Float
+  weightCharge   Float
+  priorityCharge Float
+  totalPrice     Float
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  shipment Shipment @relation(fields: [shipmentId], references: [id])
+}
+
+model Notification {
+  id         String   @id @default(uuid())
+  shipmentId String
+  userId     String
+  role       Role
+  message    String
+  readStatus Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  shipment Shipment @relation(fields: [shipmentId], references: [id])
+  user     User     @relation(fields: [userId], references: [id])
+}
+
+model ShipmentEvent {
+  id         String         @id @default(uuid())
+  shipmentId String
+  status     ShipmentStatus
+  updatedBy  String
+  note       String?
+  timestamp  DateTime       @default(now())
+
+  shipment Shipment @relation(fields: [shipmentId], references: [id])
+}

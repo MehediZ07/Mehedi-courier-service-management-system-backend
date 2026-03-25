@@ -59,3 +59,35 @@ enum RegionType {
   NATIONAL
   INTERNATIONAL
 }
+
+enum HubType {
+  LOCAL         // City-level hub
+  REGIONAL      // Province/state hub
+  INTERNATIONAL // Country-level hub
+}
+
+enum LegType {
+  DIRECT        // Sender → Recipient (same city)
+  PICKUP        // Sender → Hub
+  HUB_TRANSFER  // Hub → Hub
+  DELIVERY      // Hub → Recipient
+}
+
+enum LegStatus {
+  PENDING
+  ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+enum LocationType {
+  ADDRESS
+  HUB
+}
+
+enum DeliveryType {
+  LEGACY_DIRECT // Old system (backward compatible)
+  DIRECT        // New single-leg delivery
+  HUB_BASED     // Multi-leg delivery
+}

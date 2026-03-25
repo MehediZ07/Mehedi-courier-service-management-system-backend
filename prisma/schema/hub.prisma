@@ -1,0 +1,13 @@
+model Hub {
+  id        String   @id @default(uuid())
+  name      String   // "Dhaka Central Hub"
+  city      String   // "Dhaka"
+  address   String
+  hubType   HubType  @default(LOCAL)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  shipmentsIn  ShipmentLeg[] @relation("DestinationHub")
+  shipmentsOut ShipmentLeg[] @relation("OriginHub")
+}

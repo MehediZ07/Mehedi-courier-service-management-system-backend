@@ -17,6 +17,11 @@ model Shipment {
   paymentStatus   PaymentStatus  @default(PENDING)
   proofOfDelivery String?
   note            String?
+  
+  // NEW: Hub-based delivery fields
+  deliveryType    DeliveryType?  // null = legacy, DIRECT, HUB_BASED
+  currentLegId    String?        // Track active leg
+  
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
 
@@ -27,4 +32,5 @@ model Shipment {
   pricing       ShipmentPricing?
   notifications Notification[]
   events        ShipmentEvent[]
+  legs          ShipmentLeg[]   // NEW: Multi-leg journey
 }

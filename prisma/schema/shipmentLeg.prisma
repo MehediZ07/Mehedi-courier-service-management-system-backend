@@ -1,0 +1,40 @@
+model ShipmentLeg {
+  id         String       @id @default(uuid())
+  shipmentId String
+  legNumber  Int          // 1, 2, 3... (sequence order)
+  legType    LegType      // PICKUP, HUB_TRANSFER, DELIVERY, DIRECT
+
+  // Origin location
+  originType    LocationType // ADDRESS or HUB
+  originAddress String?
+  originHubId   String?
+
+  // Destination location
+  destType    LocationType // ADDRESS or HUB
+  destAddress String?
+  destHubId   String?
+
+  // Courier assignment
+  courierId String?
+  status    LegStatus @default(PENDING)
+
+  // Tracking timestamps
+  assignedAt   DateTime?
+  pickedUpAt   DateTime?
+  deliveredAt  DateTime?
+  estimatedAt  DateTime? // Estimated delivery time
+  note         String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // Relations
+  shipment  Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  courier   Courier? @relation(fields: [courierId], references: [id])
+  originHub Hub?     @relation("OriginHub", fields: [originHubId], references: [id])
+  destHub   Hub?     @relation("DestinationHub", fields: [destHubId], references: [id])
+
+  @@unique([shipmentId, legNumber])
+  @@index([shipmentId])
+  @@index([courierId])
+  @@index([status])
+}
