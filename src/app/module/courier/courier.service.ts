@@ -5,7 +5,7 @@ import { QueryBuilder } from '../../utils/QueryBuilder.js';
 import { IQueryParams } from '../../interfaces/query.interface.js';
 import { VehicleType } from '@prisma/client';
 
-const createCourier = async (payload: { userId: string; vehicleType: VehicleType; licenseNumber: string }) => {
+const createCourier = async (payload: { userId: string; vehicleType: VehicleType; licenseNumber: string; city: string }) => {
   const user = await prisma.user.findUnique({ where: { id: payload.userId } });
   if (!user) throw new AppError(status.NOT_FOUND, 'User not found.');
 
@@ -51,7 +51,7 @@ const getMyCourierProfile = async (userId: string) => {
   return courier;
 };
 
-const updateCourier = async (id: string, payload: { vehicleType?: VehicleType; licenseNumber?: string; availability?: boolean }) => {
+const updateCourier = async (id: string, payload: { vehicleType?: VehicleType; licenseNumber?: string; city?: string; availability?: boolean }) => {
   return prisma.courier.update({
     where: { id },
     data: payload,

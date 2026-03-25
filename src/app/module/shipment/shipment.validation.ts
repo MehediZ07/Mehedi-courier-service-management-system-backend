@@ -15,7 +15,7 @@ const create = z.object({
 });
 
 const assignCourier = z.object({
-  courierId: z.string().uuid(),
+  courierId: z.string().min(1),
 });
 
 const updateStatus = z.object({
