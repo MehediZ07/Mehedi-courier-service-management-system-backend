@@ -8,6 +8,25 @@ A production-ready courier and delivery management system built with Node.js, Ex
 [![Prisma](https://img.shields.io/badge/Prisma-6.19-2D3748)](https://www.prisma.io/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-blue)](https://www.postgresql.org/)
 
+## Live Demo
+
+- Backend API: https://swiftship-backend.vercel.app
+- Frontend App: https://swiftship-frontendv1.vercel.app
+
+## Test Credentials
+
+```
+Admin:       admin@courier.com / Password@123
+Super Admin: superadmin@courier.com / Password@123
+Courier:     rahim.courier@example.com / Password@123 (Dhaka, BIKE)
+Courier:     karim.courier@example.com / Password@123 (Chittagong, BICYCLE)
+Courier:     jamal.courier@example.com / Password@123 (Sylhet, CAR)
+Merchant:    fatima@shopbd.com / Password@123
+Merchant:    hasan@ecommerce.com / Password@123
+User:        ayesha@example.com / Password@123
+User:        tanvir@example.com / Password@123
+```
+
 ---
 
 ## Table of Contents
