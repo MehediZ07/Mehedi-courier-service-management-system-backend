@@ -118,7 +118,7 @@ const changePassword = async (userId: string, oldPassword: string, newPassword: 
 const getMe = async (userId: string) => {
   return prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, name: true, email: true, role: true, phone: true, status: true, createdAt: true },
+    select: { id: true, name: true, email: true, role: true, phone: true, profileImage: true, status: true, createdAt: true },
   });
 };
 
