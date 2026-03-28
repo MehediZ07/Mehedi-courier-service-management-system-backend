@@ -4,7 +4,7 @@ import { prisma } from '../../lib/prisma.js';
 import { QueryBuilder } from '../../utils/QueryBuilder.js';
 import { IQueryParams } from '../../interfaces/query.interface.js';
 import { Role, UserStatus } from '@prisma/client';
-import { deleteFileFromCloudinary } from '../../config/cloudinary.config.js';
+import { deleteFileFromCloudinary, uploadBase64ToCloudinary } from '../../config/cloudinary.config.js';
 
 const getAllUsers = async (queryParams: IQueryParams) => {
   return new QueryBuilder(prisma.user, queryParams, {
@@ -32,6 +32,25 @@ const updateUser = async (id: string, payload: { name?: string; phone?: string; 
     where: { id },
     data: payload,
     select: { id: true, name: true, email: true, role: true, phone: true, profileImage: true, status: true },
+  });
+};
+
+const uploadProfileImageBase64 = async (id: string, base64Image: string, filename: string, mimetype: string, oldImageUrl?: string) => {
+  // Delete old image if exists
+  if (oldImageUrl) {
+    const publicId = oldImageUrl.split('/').pop()?.split('.')[0];
+    if (publicId) {
+      await deleteFileFromCloudinary(publicId);
+    }
+  }
+
+  // Upload new image
+  const imageUrl = await uploadBase64ToCloudinary(base64Image, 'courier-system', filename);
+
+  return prisma.user.update({
+    where: { id },
+    data: { profileImage: imageUrl },
+    select: { id: true, name: true, email: true, profileImage: true },
   });
 };
 
@@ -69,4 +88,4 @@ const deleteUser = async (id: string) => {
   await prisma.user.delete({ where: { id } });
 };
 
-export const UserService = { getAllUsers, getUserById, updateUser, updateUserProfileImage, updateStatus, updateRole, deleteUser };
+export const UserService = { getAllUsers, getUserById, updateUser, uploadProfileImageBase64, updateUserProfileImage, updateStatus, updateRole, deleteUser };

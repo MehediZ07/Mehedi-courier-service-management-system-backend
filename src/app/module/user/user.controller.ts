@@ -20,13 +20,12 @@ const updateUser = catchAsync(async (req, res) => {
 
 const uploadProfileImage = catchAsync(async (req, res) => {
   console.log('Upload request received:', {
-    hasFile: !!req.file,
+    hasImage: !!req.body.image,
     userId: req.params.id,
-    contentType: req.headers['content-type']
   });
 
-  if (!req.file) {
-    return sendResponse(res, { httpStatusCode: status.BAD_REQUEST, success: false, message: 'No file uploaded.' });
+  if (!req.body.image) {
+    return sendResponse(res, { httpStatusCode: status.BAD_REQUEST, success: false, message: 'No image data provided.' });
   }
 
   const targetUserId = req.params.id as string;
@@ -45,9 +44,14 @@ const uploadProfileImage = catchAsync(async (req, res) => {
     });
   }
 
-  const imageUrl = req.file.path;
   const user = await UserService.getUserById(targetUserId);
-  const result = await UserService.updateUserProfileImage(targetUserId, imageUrl, user.profileImage || undefined);
+  const result = await UserService.uploadProfileImageBase64(
+    targetUserId, 
+    req.body.image, 
+    req.body.filename || 'profile.jpg',
+    req.body.mimetype || 'image/jpeg',
+    user.profileImage || undefined
+  );
 
   sendResponse(res, { httpStatusCode: status.OK, success: true, message: 'Profile image uploaded.', data: result });
 });
