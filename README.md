@@ -1,6 +1,6 @@
-# 🚚 Courier Management System - Backend
+# Courier Management System - Backend
 
-A production-ready, full-featured courier and delivery management system built with Node.js, Express, TypeScript, Prisma, and PostgreSQL. This system provides a complete solution for managing shipments, couriers, merchants, payments, dynamic pricing, and real-time tracking — similar to Uber Eats, Foodpanda, or DHL.
+A production-ready courier and delivery management system built with Node.js, Express, TypeScript, Prisma, and PostgreSQL. This system provides a complete solution for managing shipments, couriers, merchants, payments, dynamic pricing, and real-time tracking.
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-20+-green)](https://nodejs.org/)
@@ -10,127 +10,114 @@ A production-ready, full-featured courier and delivery management system built w
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
-- [Features](#-features)
-- [Tech Stack](#-tech-stack)
-- [System Architecture](#-system-architecture)
-- [Getting Started](#-getting-started)
-- [Environment Variables](#-environment-variables)
-- [API Documentation](#-api-documentation)
-- [Database Schema](#-database-schema)
-- [User Roles](#-user-roles)
-- [Pricing Engine](#-pricing-engine)
-- [Payment Integration](#-payment-integration)
-- [Project Structure](#-project-structure)
-- [Scripts](#-scripts)
-- [Contributing](#-contributing)
-- [License](#-license)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Getting Started](#getting-started)
+- [Environment Variables](#environment-variables)
+- [Database Schema](#database-schema)
+- [User Roles](#user-roles)
+- [Pricing Engine](#pricing-engine)
+- [Payment Integration](#payment-integration)
+- [Project Structure](#project-structure)
+- [Scripts](#scripts)
 
 ---
 
-## ✨ Features
+## Features
 
-### 🔐 Authentication & Authorization
+### Authentication & Authorization
 - JWT-based authentication with access and refresh tokens
-- Role-based access control (RBAC) with 5 user roles
+- Role-based access control with 5 user roles
 - Secure password hashing with bcrypt
 - Token refresh mechanism
 - Password change functionality
 
-### 👥 User Management
+### User Management
 - User registration and profile management
-- Profile image upload to Cloudinary
+- Profile image upload with base64 encoding (Vercel-compatible)
+- Cloudinary integration for image storage
 - User status management (Active, Inactive, Suspended)
-- Advanced search and filtering
-- Pagination and sorting
+- Advanced search, filtering, pagination, and sorting
 
-### 🚴 Courier Self-Service System
-- **Public courier registration** - Anyone can apply to become a delivery rider
-- **Admin approval workflow** - Approve or reject courier applications
-- **Availability toggle** - Couriers can go online/offline anytime
-- **View available shipments** - Browse unassigned deliveries
-- **Self-assignment** - Couriers accept shipments themselves (no admin needed)
-- **Real-time status updates** - Update delivery progress on the go
-- **Earnings tracking** - Track total earnings per courier
-- **Vehicle type support** - Bike, Bicycle, Car, Van, Truck
+### Courier Management
+- Public courier registration with admin approval workflow
+- Availability toggle for online/offline status
+- View and accept available shipments
+- Self-assignment of deliveries
+- Real-time status updates
+- Earnings and COD settlement tracking
+- Vehicle type support (Bike, Bicycle, Car, Van, Truck)
+- City-based courier assignment
 
-### 📦 Shipment Management
+### Shipment Management
 - Create and track shipments with unique tracking numbers
 - Real-time shipment status updates
-- Public tracking (no authentication required)
+- Public tracking without authentication
 - Priority shipping (Standard/Express)
 - Proof of delivery support
-- Shipment event logging
-- Advanced filtering and search
-- **Hub-based multi-leg delivery** — Scalable delivery system with hub network
-- **Automatic route planning** — System creates optimal delivery legs
-- **Leg-based courier workflow** — Couriers work locally within their area
+- Hub-based multi-leg delivery system
+- Automatic route planning
+- Leg-based courier workflow for local deliveries
+- Shipment cancellation support
 
-### 💰 Dynamic Pricing Engine
-- **Region-based pricing** — LOCAL, NATIONAL, INTERNATIONAL tiers
-- **Auto price calculation** — system calculates total from weight + region + priority; no manual `amount` needed
-- **Express surcharge** — configurable multiplier per region (e.g. ×1.25 = +25%)
-- **Admin-configurable rates** — update pricing without code changes
-- **ShipmentPricing audit trail** — full price breakdown stored per shipment
-- **Public price quote API** — get a quote before creating a shipment
+### Dynamic Pricing Engine
+- Region-based pricing (LOCAL, NATIONAL, INTERNATIONAL)
+- Automatic price calculation from weight, region, and priority
+- Express surcharge configuration per region
+- Admin-configurable rates without code changes
+- ShipmentPricing audit trail for each shipment
+- Public price quote API
 
-### 💳 Payment Processing
-- Multiple payment methods:
-  - **Cash on Delivery (COD)**
-  - **Stripe** integration
-  - **SSLCommerz** support
+### Payment Processing
+- Multiple payment methods: Cash on Delivery, Stripe, SSLCommerz
 - Automatic payment status updates
 - Payment history and tracking
 - Secure transaction handling
+- COD settlement for couriers
+- Merchant settlement tracking
 
-### 🏢 Merchant Management
-- Merchant profile creation
+### Merchant Management
+- Merchant profile creation and management
 - Company information management
-- Bulk shipment creation
 - Shipment history tracking
+- Settlement history and pending balance tracking
+- Product price configuration
 
-### 🔔 Notification System
+### Notification System
 - Real-time notifications for shipment updates
 - Read/unread status tracking
 - Mark all as read functionality
 - User-specific notification feed
 
-### 🔍 Advanced Features
-- Query builder with search, filter, sort, and pagination
-- Cloudinary integration for image storage
-- Automatic image cleanup on deletion
-- Global error handling
-- Request validation with Zod
-- Type-safe database queries with Prisma
-
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 ### Backend
-- **Runtime:** Node.js 20+
-- **Framework:** Express.js 5.2
-- **Language:** TypeScript 5.9
-- **Database:** PostgreSQL 15+
-- **ORM:** Prisma 6.19
+- Runtime: Node.js 20+
+- Framework: Express.js 5.2
+- Language: TypeScript 5.9
+- Database: PostgreSQL 15+
+- ORM: Prisma 6.19
 
 ### Authentication & Security
-- **JWT:** jsonwebtoken
-- **Password Hashing:** bcryptjs
-- **Validation:** Zod
+- JWT: jsonwebtoken
+- Password Hashing: bcryptjs
+- Validation: Zod
 
 ### Payment Gateways
-- **Stripe:** stripe
-- **SSLCommerz:** (Ready for integration)
+- Stripe
+- SSLCommerz (Ready for integration)
 
 ### File Storage
-- **Cloudinary:** cloudinary, multer-storage-cloudinary
+- Cloudinary for image uploads
 
 ### Development Tools
-- **Linting:** ESLint
-- **Type Checking:** TypeScript
-- **Hot Reload:** tsx
+- ESLint for code linting
+- TypeScript for type checking
+- tsx for hot reload
 
 ---
 
@@ -177,59 +164,60 @@ A production-ready, full-featured courier and delivery management system built w
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 - Node.js 20 or higher
 - PostgreSQL 15 or higher
 - npm or pnpm
-- Cloudinary account (for image uploads)
-- Stripe account (for payment processing)
+- Cloudinary account for image uploads
+- Stripe account for payment processing
 
 ### Installation
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd L2B6A5-Backend-Management-System
-   ```
+1. Clone the repository
+```bash
+git clone <repository-url>
+cd L2B6A5-Backend-Management-System
+```
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
+2. Install dependencies
+```bash
+npm install
+```
 
-3. **Set up environment variables**
-   ```bash
-   cp .env.example .env
-   ```
-   Edit `.env` with your configuration (see [Environment Variables](#-environment-variables))
+3. Set up environment variables
+```bash
+cp .env.example .env
+```
+Edit `.env` with your configuration (see Environment Variables section)
 
-4. **Set up the database**
-   ```bash
-   # Run migrations
-   npm run migrate
+4. Set up the database
+```bash
+# Run migrations
+npm run migrate
 
-   # Generate Prisma Client
-   npm run generate
+# Generate Prisma Client
+npm run generate
+```
 
-   # Super admin is auto-seeded on first run
-   npm run dev
-   ```
+5. Start the development server
+```bash
+npm run dev
+```
 
-5. **Start the development server**
-   ```bash
-   npm run dev
-   ```
+Server will start at `http://localhost:5000`
 
-   Server will start at `http://localhost:5000`
-
-6. **Seed initial pricing** (required before creating shipments)
-   ```bash
-   POST /api/v1/pricing  { "regionType": "LOCAL",         "basePrice": 50,  "perKgPrice": 20,  "expressMult": 1.2  }
-   POST /api/v1/pricing  { "regionType": "NATIONAL",      "basePrice": 100, "perKgPrice": 30,  "expressMult": 1.25 }
-   POST /api/v1/pricing  { "regionType": "INTERNATIONAL", "basePrice": 500, "perKgPrice": 150, "expressMult": 1.5  }
-   ```
+6. Seed initial pricing (required before creating shipments)
+```bash
+POST /api/v1/pricing
+{
+  "regionType": "LOCAL",
+  "basePrice": 50,
+  "perKgPrice": 20,
+  "expressMult": 1.2
+}
+```
 
 ---
 
@@ -349,9 +337,11 @@ Courier
 ├── userId: String (unique)
 ├── vehicleType: VehicleType (BIKE, BICYCLE, CAR, VAN, TRUCK)
 ├── licenseNumber: String
+├── city: String?
 ├── availability: Boolean
 ├── approvalStatus: ApprovalStatus (PENDING, APPROVED, REJECTED)
 ├── totalEarnings: Float
+├── pendingCOD: Float
 └── Relations: User, Shipments, ShipmentLegs
 
 Shipment
@@ -362,12 +352,14 @@ Shipment
 ├── courierId: String?
 ├── pickupAddress: String
 ├── pickupCity: String
+├── pickupPhone: String
 ├── deliveryAddress: String
 ├── deliveryCity: String
+├── deliveryPhone: String
 ├── packageType: String
 ├── weight: Float
 ├── priority: Priority (STANDARD, EXPRESS)
-├── status: ShipmentStatus (PENDING, ASSIGNED, PICKED_UP, IN_TRANSIT, OUT_FOR_DELIVERY, DELIVERED, FAILED, RETURNED)
+├── status: ShipmentStatus (PENDING, ASSIGNED, PICKED_UP, IN_TRANSIT, OUT_FOR_DELIVERY, DELIVERED, FAILED, RETURNED, CANCELLED)
 ├── paymentStatus: PaymentStatus (PENDING, PAID, COD, FAILED)
 ├── proofOfDelivery: String?
 ├── deliveryType: DeliveryType? (LEGACY_DIRECT, DIRECT, HUB_BASED)
