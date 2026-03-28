@@ -1,0 +1,7 @@
+-- AlterTable
+ALTER TABLE "Courier" ADD COLUMN     "pendingCOD" DOUBLE PRECISION NOT NULL DEFAULT 0;
+
+-- AlterTable
+ALTER TABLE "ShipmentLeg" ADD COLUMN     "codAmount" DOUBLE PRECISION,
+ADD COLUMN     "codCollected" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN     "courierEarning" DOUBLE PRECISION NOT NULL DEFAULT 0;

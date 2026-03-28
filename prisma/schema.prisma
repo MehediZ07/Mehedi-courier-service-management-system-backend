@@ -38,6 +38,7 @@ enum ShipmentStatus {
   IN_TRANSIT
   OUT_FOR_DELIVERY
   DELIVERED
+  CANCELLED
   FAILED
   RETURNED
 }
@@ -136,6 +137,7 @@ model Courier {
   availability   Boolean        @default(true)
   approvalStatus ApprovalStatus @default(PENDING)
   totalEarnings  Float          @default(0)
+  pendingCOD     Float          @default(0)
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 
@@ -147,12 +149,13 @@ model Courier {
 }
 
 model Merchant {
-  id          String   @id @default(uuid())
-  userId      String   @unique
-  companyName String
-  address     String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                 String   @id @default(uuid())
+  userId             String   @unique
+  companyName        String
+  address            String?
+  pendingSettlement  Float    @default(0)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   user      User       @relation(fields: [userId], references: [id])
   shipments Shipment[]
@@ -186,6 +189,7 @@ model Shipment {
   deliveryPhone   String         @default("")
   packageType     String
   weight          Float
+  productPrice    Float          @default(0)
   priority        Priority       @default(STANDARD)
   status          ShipmentStatus @default(PENDING)
   paymentStatus   PaymentStatus  @default(PENDING)
@@ -224,6 +228,14 @@ model ShipmentLeg {
   deliveredAt   DateTime?
   estimatedAt   DateTime?
   note          String?
+  
+  // COD tracking
+  codCollected  Boolean      @default(false)
+  codAmount     Float?
+  
+  // Earnings
+  courierEarning Float       @default(0)
+  
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 

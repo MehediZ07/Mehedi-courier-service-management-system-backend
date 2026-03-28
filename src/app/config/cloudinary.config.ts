@@ -9,7 +9,8 @@ cloudinary.config({
 
 export const deleteFileFromCloudinary = async (publicId: string) => {
   try {
-    await cloudinary.uploader.destroy(publicId);
+    const fullPublicId = `courier-system/${publicId}`;
+    await cloudinary.uploader.destroy(fullPublicId);
   } catch (error) {
     console.error('Error deleting file from Cloudinary:', error);
   }

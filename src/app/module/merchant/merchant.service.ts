@@ -49,6 +49,17 @@ const getMyMerchantProfile = async (userId: string) => {
   return merchant;
 };
 
+const getMySettlement = async (userId: string) => {
+  const merchant = await prisma.merchant.findUnique({ where: { userId } });
+  if (!merchant) throw new AppError(status.NOT_FOUND, 'Merchant profile not found.');
+
+  return {
+    pendingSettlement: merchant.pendingSettlement,
+    totalSettled: 0,
+    transactions: [],
+  };
+};
+
 const updateMerchant = async (id: string, payload: { companyName?: string; address?: string }) => {
   return prisma.merchant.update({
     where: { id },
@@ -61,4 +72,34 @@ const deleteMerchant = async (id: string) => {
   await prisma.merchant.delete({ where: { id } });
 };
 
-export const MerchantService = { createMerchant, getAllMerchants, getMerchantById, getMyMerchantProfile, updateMerchant, deleteMerchant };
+const getAllMerchantsWithPendingSettlement = async () => {
+  return prisma.merchant.findMany({
+    where: { pendingSettlement: { gt: 0 } },
+    include: { user: { select: { id: true, name: true, email: true, phone: true } } },
+    orderBy: { pendingSettlement: 'desc' },
+  });
+};
+
+const settleMerchantPayment = async (merchantId: string, amount: number) => {
+  const merchant = await prisma.merchant.findUnique({ where: { id: merchantId } });
+  if (!merchant) throw new AppError(status.NOT_FOUND, 'Merchant not found.');
+  if (merchant.pendingSettlement < amount) throw new AppError(status.BAD_REQUEST, 'Settlement amount exceeds pending balance.');
+
+  return prisma.merchant.update({
+    where: { id: merchantId },
+    data: { pendingSettlement: { decrement: amount } },
+    include: { user: { select: { id: true, name: true, email: true } } },
+  });
+};
+
+export const MerchantService = { 
+  createMerchant, 
+  getAllMerchants, 
+  getMerchantById, 
+  getMyMerchantProfile,
+  getMySettlement,
+  updateMerchant, 
+  deleteMerchant,
+  getAllMerchantsWithPendingSettlement,
+  settleMerchantPayment,
+};

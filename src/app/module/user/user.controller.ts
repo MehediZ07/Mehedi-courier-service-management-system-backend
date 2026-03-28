@@ -19,6 +19,12 @@ const updateUser = catchAsync(async (req, res) => {
 });
 
 const uploadProfileImage = catchAsync(async (req, res) => {
+  console.log('Upload request received:', {
+    hasFile: !!req.file,
+    userId: req.params.id,
+    contentType: req.headers['content-type']
+  });
+
   if (!req.file) {
     return sendResponse(res, { httpStatusCode: status.BAD_REQUEST, success: false, message: 'No file uploaded.' });
   }

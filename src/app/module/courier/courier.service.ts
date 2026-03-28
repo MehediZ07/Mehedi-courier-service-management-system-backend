@@ -86,4 +86,60 @@ const toggleAvailability = async (userId: string) => {
   });
 };
 
-export const CourierService = { createCourier, getAllCouriers, getCourierById, getMyCourierProfile, updateCourier, deleteCourier, approveCourier, toggleAvailability };
+const getMyEarnings = async (userId: string) => {
+  const courier = await prisma.courier.findUnique({ where: { userId } });
+  if (!courier) throw new AppError(status.NOT_FOUND, 'Courier profile not found.');
+
+  const legs = await prisma.shipmentLeg.findMany({
+    where: { courierId: courier.id, status: 'COMPLETED' },
+    include: {
+      shipment: {
+        select: {
+          trackingNumber: true,
+          createdAt: true,
+        },
+      },
+    },
+    orderBy: { deliveredAt: 'desc' },
+    take: 50,
+  });
+
+  return {
+    totalEarnings: courier.totalEarnings,
+    pendingCOD: courier.pendingCOD,
+    recentLegs: legs.map((leg) => ({
+      id: leg.id,
+      trackingNumber: leg.shipment.trackingNumber,
+      legType: leg.legType,
+      earning: leg.courierEarning,
+      codCollected: leg.codCollected,
+      codAmount: leg.codAmount,
+      completedAt: leg.deliveredAt,
+    })),
+  };
+};
+
+const getMyCODSettlement = async (userId: string) => {
+  const courier = await prisma.courier.findUnique({ where: { userId } });
+  if (!courier) throw new AppError(status.NOT_FOUND, 'Courier profile not found.');
+
+  return {
+    pendingCOD: courier.pendingCOD,
+    totalSettled: 0,
+    transactions: [],
+  };
+};
+
+const settleCOD = async (courierId: string, amount: number) => {
+  const courier = await prisma.courier.findUnique({ where: { id: courierId } });
+  if (!courier) throw new AppError(status.NOT_FOUND, 'Courier not found.');
+  if (courier.pendingCOD < amount) throw new AppError(status.BAD_REQUEST, 'Amount exceeds pending COD.');
+
+  return prisma.courier.update({
+    where: { id: courierId },
+    data: { pendingCOD: { decrement: amount } },
+    include: { user: { select: { id: true, name: true, email: true, phone: true } } },
+  });
+};
+
+export const CourierService = { createCourier, getAllCouriers, getCourierById, getMyCourierProfile, updateCourier, deleteCourier, approveCourier, toggleAvailability, getMyEarnings, getMyCODSettlement, settleCOD };

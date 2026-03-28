@@ -67,6 +67,67 @@ const getShipmentLegs = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getAllLegs = catchAsync(async (req: Request, res: Response) => {
+  const result = await ShipmentLegService.getAllLegs(req.query as IQueryParams);
+  sendResponse(res, {
+    httpStatusCode: status.OK,
+    success: true,
+    message: 'All legs fetched successfully.',
+    data: result.data,
+    meta: result.meta,
+  });
+});
+
+const assignCourierToLeg = catchAsync(async (req: Request, res: Response) => {
+  const result = await ShipmentLegService.assignCourierToLeg(req.params.id as string, req.body.courierId);
+  sendResponse(res, {
+    httpStatusCode: status.OK,
+    success: true,
+    message: 'Courier assigned to leg successfully.',
+    data: result,
+  });
+});
+
+const releaseHubTransfer = catchAsync(async (req: Request, res: Response) => {
+  const result = await ShipmentLegService.releaseHubTransfer(req.body.legIds, req.body.note);
+  sendResponse(res, {
+    httpStatusCode: status.OK,
+    success: true,
+    message: 'Hub transfer released successfully.',
+    data: result,
+  });
+});
+
+const confirmHubTransfer = catchAsync(async (req: Request, res: Response) => {
+  const result = await ShipmentLegService.confirmHubTransfer(req.body.legIds, req.body.note);
+  sendResponse(res, {
+    httpStatusCode: status.OK,
+    success: true,
+    message: 'Hub transfer confirmed successfully.',
+    data: result,
+  });
+});
+
+const markPickupRefused = catchAsync(async (req: Request, res: Response) => {
+  const result = await ShipmentLegService.markPickupRefused(req.params.id as string, req.user!.userId, req.body.reason);
+  sendResponse(res, {
+    httpStatusCode: status.OK,
+    success: true,
+    message: 'Pickup refusal recorded. Shipment marked as RETURNED.',
+    data: result,
+  });
+});
+
+const markDeliveryRefused = catchAsync(async (req: Request, res: Response) => {
+  const result = await ShipmentLegService.markDeliveryRefused(req.params.id as string, req.user!.userId, req.body.reason);
+  sendResponse(res, {
+    httpStatusCode: status.OK,
+    success: true,
+    message: 'Delivery refusal recorded. Return leg created.',
+    data: result,
+  });
+});
+
 export const ShipmentLegController = {
   getAvailableLegs,
   getMyCourierLegs,
@@ -74,4 +135,10 @@ export const ShipmentLegController = {
   markLegPickedUp,
   markLegDelivered,
   getShipmentLegs,
+  getAllLegs,
+  assignCourierToLeg,
+  releaseHubTransfer,
+  confirmHubTransfer,
+  markPickupRefused,
+  markDeliveryRefused,
 };

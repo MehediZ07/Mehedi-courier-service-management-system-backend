@@ -9,6 +9,7 @@ const create = z.object({
   deliveryPhone: z.string().min(10),
   packageType: z.string().min(1),
   weight: z.number().positive(),
+  productPrice: z.number().nonnegative().optional(),
   priority: z.enum(['STANDARD', 'EXPRESS']).optional().default('STANDARD'),
   paymentMethod: z.enum(['STRIPE', 'COD']),
   note: z.string().optional(),

@@ -12,6 +12,7 @@ router.get('/track/:trackingNumber', ShipmentController.trackShipment);
 // Authenticated
 router.post('/', checkAuth('USER', 'MERCHANT'), validateRequest(ShipmentValidation.create), ShipmentController.createShipment);
 router.get('/my', checkAuth('USER', 'MERCHANT'), ShipmentController.getMyShipments);
+router.post('/:id/cancel', checkAuth('USER', 'MERCHANT'), ShipmentController.cancelShipment);
 router.get('/courier/assigned', checkAuth('COURIER'), ShipmentController.getMyCourierShipments);
 router.get('/courier/available', checkAuth('COURIER'), ShipmentController.getAvailableShipments);
 router.post('/:id/accept', checkAuth('COURIER'), ShipmentController.acceptShipment);

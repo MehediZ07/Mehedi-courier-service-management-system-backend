@@ -37,7 +37,10 @@ const updateUser = async (id: string, payload: { name?: string; phone?: string; 
 
 const updateUserProfileImage = async (id: string, imageUrl: string, oldImageUrl?: string) => {
   if (oldImageUrl) {
-    await deleteFileFromCloudinary(oldImageUrl);
+    const publicId = oldImageUrl.split('/').pop()?.split('.')[0];
+    if (publicId) {
+      await deleteFileFromCloudinary(publicId);
+    }
   }
 
   return prisma.user.update({
@@ -58,7 +61,10 @@ const updateRole = async (id: string, role: Role) => {
 const deleteUser = async (id: string) => {
   const user = await prisma.user.findUnique({ where: { id } });
   if (user?.profileImage) {
-    await deleteFileFromCloudinary(user.profileImage);
+    const publicId = user.profileImage.split('/').pop()?.split('.')[0];
+    if (publicId) {
+      await deleteFileFromCloudinary(publicId);
+    }
   }
   await prisma.user.delete({ where: { id } });
 };

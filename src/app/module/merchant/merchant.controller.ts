@@ -23,6 +23,11 @@ const getMyMerchantProfile = catchAsync(async (req, res) => {
   sendResponse(res, { httpStatusCode: status.OK, success: true, message: 'Merchant profile fetched.', data: result });
 });
 
+const getMySettlement = catchAsync(async (req, res) => {
+  const result = await MerchantService.getMySettlement(req.user!.userId);
+  sendResponse(res, { httpStatusCode: status.OK, success: true, message: 'Settlement data fetched.', data: result });
+});
+
 const updateMerchant = catchAsync(async (req, res) => {
   const result = await MerchantService.updateMerchant(req.params.id as string, req.body);
   sendResponse(res, { httpStatusCode: status.OK, success: true, message: 'Merchant updated.', data: result });
@@ -33,4 +38,24 @@ const deleteMerchant = catchAsync(async (req, res) => {
   sendResponse(res, { httpStatusCode: status.OK, success: true, message: 'Merchant deleted.' });
 });
 
-export const MerchantController = { createMerchant, getAllMerchants, getMerchantById, getMyMerchantProfile, updateMerchant, deleteMerchant };
+const getAllMerchantsWithPendingSettlement = catchAsync(async (req, res) => {
+  const result = await MerchantService.getAllMerchantsWithPendingSettlement();
+  sendResponse(res, { httpStatusCode: status.OK, success: true, message: 'Merchants with pending settlement fetched.', data: result });
+});
+
+const settleMerchantPayment = catchAsync(async (req, res) => {
+  const result = await MerchantService.settleMerchantPayment(req.params.id as string, req.body.amount);
+  sendResponse(res, { httpStatusCode: status.OK, success: true, message: 'Merchant payment settled.', data: result });
+});
+
+export const MerchantController = { 
+  createMerchant, 
+  getAllMerchants, 
+  getMerchantById, 
+  getMyMerchantProfile,
+  getMySettlement,
+  updateMerchant, 
+  deleteMerchant,
+  getAllMerchantsWithPendingSettlement,
+  settleMerchantPayment,
+};

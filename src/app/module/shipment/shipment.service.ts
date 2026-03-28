@@ -9,7 +9,7 @@ import { determineDeliveryType, planShipmentRoute } from './routePlanning.servic
 
 type PaymentMethod = 'STRIPE' | 'COD';
 type Priority = 'STANDARD' | 'EXPRESS';
-type ShipmentStatus = 'PENDING' | 'ASSIGNED' | 'PICKED_UP' | 'IN_TRANSIT' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'FAILED' | 'RETURNED';
+type ShipmentStatus = 'PENDING' | 'ASSIGNED' | 'PICKED_UP' | 'IN_TRANSIT' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'CANCELLED' | 'FAILED' | 'RETURNED';
 
 const generateTrackingNumber = () => `TRK-${uuidv4().split('-')[0].toUpperCase()}-${Date.now()}`;
 
@@ -42,6 +42,7 @@ const createShipment = async (
     deliveryPhone: string;
     packageType: string;
     weight: number;
+    productPrice?: number;
     priority?: Priority;
     paymentMethod: PaymentMethod;
     note?: string;
@@ -57,9 +58,14 @@ const createShipment = async (
   const { basePrice, weightCharge, priorityCharge, totalPrice } = computePrice(pricingConfig, payload.weight, priority);
 
   let merchantId: string | undefined;
+  const productPrice = payload.productPrice ?? 0;
+  
+  // Only merchants can set product price
   if (senderRole === 'MERCHANT') {
     const merchant = await prisma.merchant.findUnique({ where: { userId: senderId } });
     if (merchant) merchantId = merchant.id;
+  } else if (productPrice > 0) {
+    throw new AppError(status.BAD_REQUEST, 'Only merchants can set product price.');
   }
 
   const deliveryType = determineDeliveryType(regionType);
@@ -72,6 +78,9 @@ const createShipment = async (
     priority,
     regionType,
   });
+
+  // Total COD amount = product price + shipment charge
+  const codAmount = productPrice + totalPrice;
 
   return prisma.$transaction(async (tx) => {
     const shipment = await tx.shipment.create({
@@ -87,6 +96,7 @@ const createShipment = async (
         deliveryPhone: payload.deliveryPhone,
         packageType: payload.packageType,
         weight: payload.weight,
+        productPrice,
         priority,
         paymentStatus: payload.paymentMethod === 'COD' ? 'COD' : 'PENDING',
         note: payload.note,
@@ -98,7 +108,7 @@ const createShipment = async (
     await tx.payment.create({
       data: {
         shipmentId: shipment.id,
-        amount: totalPrice,
+        amount: payload.paymentMethod === 'COD' ? codAmount : totalPrice,
         method: payload.paymentMethod,
         status: payload.paymentMethod === 'COD' ? 'COD' : 'PENDING',
       },
@@ -363,6 +373,49 @@ const acceptShipment = async (shipmentId: string, userId: string) => {
   });
 };
 
+const cancelShipment = async (shipmentId: string, userId: string, reason?: string) => {
+  const shipment = await prisma.shipment.findUnique({ 
+    where: { id: shipmentId },
+    include: { legs: { orderBy: { legNumber: 'asc' } } }
+  });
+  if (!shipment) throw new AppError(status.NOT_FOUND, 'Shipment not found.');
+  if (shipment.senderId !== userId) throw new AppError(status.FORBIDDEN, 'You can only cancel your own shipments.');
+  
+  // Check if first leg is already accepted
+  const firstLeg = shipment.legs[0];
+  if (firstLeg && firstLeg.status !== 'PENDING') {
+    throw new AppError(status.BAD_REQUEST, 'Cannot cancel shipment after courier has accepted it.');
+  }
+  
+  if (shipment.status === 'CANCELLED') {
+    throw new AppError(status.BAD_REQUEST, 'Shipment is already cancelled.');
+  }
+  
+  if (['DELIVERED', 'RETURNED'].includes(shipment.status)) {
+    throw new AppError(status.BAD_REQUEST, 'Cannot cancel completed shipments.');
+  }
+
+  return prisma.$transaction(async (tx) => {
+    const updated = await tx.shipment.update({
+      where: { id: shipmentId },
+      data: { status: 'CANCELLED' },
+      include: shipmentInclude,
+    });
+
+    await tx.shipmentEvent.create({
+      data: { shipmentId, status: 'CANCELLED', updatedBy: userId, note: reason },
+    });
+
+    // Cancel all pending legs
+    await tx.shipmentLeg.updateMany({
+      where: { shipmentId, status: 'PENDING' },
+      data: { status: 'FAILED' },
+    });
+
+    return updated;
+  });
+};
+
 export const ShipmentService = {
   createShipment,
   getAllShipments,
@@ -374,4 +427,5 @@ export const ShipmentService = {
   updateShipmentStatus,
   getAvailableShipments,
   acceptShipment,
+  cancelShipment,
 };

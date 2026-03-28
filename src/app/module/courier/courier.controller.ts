@@ -43,4 +43,19 @@ const toggleAvailability = catchAsync(async (req, res) => {
   sendResponse(res, { httpStatusCode: status.OK, success: true, message: 'Availability toggled.', data: result });
 });
 
-export const CourierController = { createCourier, getAllCouriers, getCourierById, getMyCourierProfile, updateCourier, deleteCourier, approveCourier, toggleAvailability };
+const getMyEarnings = catchAsync(async (req, res) => {
+  const result = await CourierService.getMyEarnings(req.user!.userId);
+  sendResponse(res, { httpStatusCode: status.OK, success: true, message: 'Earnings fetched.', data: result });
+});
+
+const getMyCODSettlement = catchAsync(async (req, res) => {
+  const result = await CourierService.getMyCODSettlement(req.user!.userId);
+  sendResponse(res, { httpStatusCode: status.OK, success: true, message: 'COD settlement data fetched.', data: result });
+});
+
+const settleCOD = catchAsync(async (req, res) => {
+  const result = await CourierService.settleCOD(req.params.id as string, req.body.amount);
+  sendResponse(res, { httpStatusCode: status.OK, success: true, message: 'COD settled.', data: result });
+});
+
+export const CourierController = { createCourier, getAllCouriers, getCourierById, getMyCourierProfile, updateCourier, deleteCourier, approveCourier, toggleAvailability, getMyEarnings, getMyCODSettlement, settleCOD };

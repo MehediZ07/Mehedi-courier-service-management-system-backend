@@ -53,6 +53,11 @@ const acceptShipment = catchAsync(async (req, res) => {
   sendResponse(res, { httpStatusCode: status.OK, success: true, message: 'Shipment accepted successfully.', data: result });
 });
 
+const cancelShipment = catchAsync(async (req, res) => {
+  const result = await ShipmentService.cancelShipment(req.params.id as string, req.user!.userId, req.body.reason);
+  sendResponse(res, { httpStatusCode: status.OK, success: true, message: 'Shipment cancelled successfully.', data: result });
+});
+
 export const ShipmentController = {
   createShipment,
   getAllShipments,
@@ -64,4 +69,5 @@ export const ShipmentController = {
   updateShipmentStatus,
   getAvailableShipments,
   acceptShipment,
+  cancelShipment,
 };

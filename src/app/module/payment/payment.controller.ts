@@ -2,6 +2,7 @@ import status from 'http-status';
 import { catchAsync } from '../../shared/catchAsync.js';
 import { sendResponse } from '../../shared/sendResponse.js';
 import { PaymentService } from './payment.service.js';
+import { prisma } from '../../lib/prisma.js';
 
 const getAllPayments = catchAsync(async (req, res) => {
   const result = await PaymentService.getAllPayments(req.query as Record<string, string>);
@@ -15,9 +16,9 @@ const getPaymentByShipmentId = catchAsync(async (req, res) => {
 
 const initiateStripePayment = catchAsync(async (req, res) => {
   const { amount } = req.body;
-  const user = await req.app.get('prisma').user.findUnique({ where: { id: req.user!.userId } });
+  const user = await prisma.user.findUnique({ where: { id: req.user!.userId } });
 
-  const result = await PaymentService.initiateStripePayment(req.params.shipmentId as string, amount, user.email);
+  const result = await PaymentService.initiateStripePayment(req.params.shipmentId as string, amount, user!.email);
   sendResponse(res, { httpStatusCode: status.OK, success: true, message: 'Payment initiated.', data: result });
 });
 
