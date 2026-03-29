@@ -12,19 +12,17 @@ A production-ready courier and delivery management system built with Node.js, Ex
 
 - Backend API: https://swiftship-backend.vercel.app
 - Frontend App: https://swiftship-frontendv1.vercel.app
+- Live video overview: https://drive.google.com/file/d/1tifUZPwJU50tc23QoKL6e_zqzNV1w-aR/view?usp=sharing
 
 ## Test Credentials
 
 ```
-Admin:       admin@courier.com / Password@123
 Super Admin: superadmin@courier.com / Password@123
+Admin:       admin@courier.com / Password@123
 Courier:     rahim.courier@example.com / Password@123 (Dhaka, BIKE)
 Courier:     karim.courier@example.com / Password@123 (Chittagong, BICYCLE)
-Courier:     jamal.courier@example.com / Password@123 (Sylhet, CAR)
 Merchant:    fatima@shopbd.com / Password@123
-Merchant:    hasan@ecommerce.com / Password@123
 User:        ayesha@example.com / Password@123
-User:        tanvir@example.com / Password@123
 ```
 
 ---
@@ -140,7 +138,7 @@ User:        tanvir@example.com / Password@123
 
 ---
 
-## 🏗️ System Architecture
+## System Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -240,7 +238,7 @@ POST /api/v1/pricing
 
 ---
 
-## 🔑 Environment Variables
+##  Environment Variables
 
 Create a `.env` file in the root directory:
 
@@ -276,7 +274,7 @@ STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key
 
 ---
 
-## 📚 API Documentation
+## API Documentation
 
 Comprehensive API documentation is available in:
 - **[API_DOCUMENTATION.md](./API_DOCUMENTATION.md)** - Complete API reference with all endpoints
@@ -335,7 +333,7 @@ curl -X POST http://localhost:5000/api/v1/shipments \
 
 ---
 
-## 🗄️ Database Schema
+## Database Schema
 
 ### Core Models
 
@@ -460,7 +458,7 @@ ShipmentPricing
 
 ---
 
-## 👤 User Roles
+## User Roles
 
 | Role | Permissions | Use Case |
 |------|-------------|----------|
@@ -472,7 +470,7 @@ ShipmentPricing
 
 ---
 
-## 💰 Pricing Engine
+## Pricing Engine
 
 ### How It Works
 
@@ -511,7 +509,7 @@ totalPrice     = 250 + 62.5   = 312.5 BDT
 
 ---
 
-## 💳 Payment Integration
+## Payment Integration
 
 ### Supported Payment Methods
 
@@ -554,7 +552,7 @@ Create Shipment → Price auto-calculated → Select Payment Method
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 L2B6A5-Backend-Management-System/
@@ -619,7 +617,7 @@ module/
 
 ---
 
-## 📜 Scripts
+## Scripts
 
 ```bash
 # Development
@@ -643,7 +641,7 @@ npm run lint             # Run ESLint
 
 ---
 
-## 🔄 Complete Courier Workflow
+## Complete Courier Workflow
 
 ### 1. Courier Registration
 ```
@@ -689,9 +687,9 @@ End shift → PATCH /couriers/toggle-availability
 
 ---
 
-## 🎯 Key Features Highlights
+## Key Features Highlights
 
-### ✅ Self-Service Courier System
+### Self-Service Courier System
 Just like Uber Eats or Foodpanda:
 - Riders register themselves
 - Admin approves applications
@@ -700,14 +698,14 @@ Just like Uber Eats or Foodpanda:
 - Real-time status updates
 - Automatic customer notifications
 
-### ✅ Dynamic Pricing Engine
+### Dynamic Pricing Engine
 - Region-based rates (LOCAL / NATIONAL / INTERNATIONAL)
 - Weight-based charges
 - Express priority surcharge
 - Admin-configurable without code changes
 - Full audit trail per shipment
 
-### ✅ Production-Ready
+### Production-Ready
 - Type-safe with TypeScript
 - Comprehensive error handling
 - Request validation with Zod
@@ -717,7 +715,7 @@ Just like Uber Eats or Foodpanda:
 - Cloudinary integration
 - Payment gateway integration
 
-### ✅ Scalable Architecture
+### Scalable Architecture
 - Modular design
 - Clean separation of concerns
 - Reusable utilities
@@ -726,7 +724,7 @@ Just like Uber Eats or Foodpanda:
 
 ---
 
-## 🧪 Testing
+## Testing
 
 ```bash
 # Run tests (when implemented)
@@ -738,7 +736,7 @@ npm run test:coverage
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please follow these steps:
 
@@ -750,13 +748,13 @@ Contributions are welcome! Please follow these steps:
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the ISC License.
 
 ---
 
-## 👨‍💻 Author
+## Author
 
 **Your Name**
 - GitHub: [@yourusername](https://github.com/yourusername)
@@ -764,7 +762,7 @@ This project is licensed under the ISC License.
 
 ---
 
-## 🗺️ Roadmap
+## Roadmap
 
 - [x] Dynamic pricing engine (region + weight + priority)
 - [x] Hub-based multi-leg delivery system
@@ -780,5 +778,3 @@ This project is licensed under the ISC License.
 - [ ] API rate limiting
 
 ---
-
-**Made with ❤️ for the courier industry**
