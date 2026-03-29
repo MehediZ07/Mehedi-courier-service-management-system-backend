@@ -53,10 +53,22 @@ const getMySettlement = async (userId: string) => {
   const merchant = await prisma.merchant.findUnique({ where: { userId } });
   if (!merchant) throw new AppError(status.NOT_FOUND, 'Merchant profile not found.');
 
+  const settlements = await prisma.merchantSettlement.findMany({
+    where: { merchantId: merchant.id },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  const totalSettled = settlements.reduce((sum, s) => sum + s.amount, 0);
+
   return {
     pendingSettlement: merchant.pendingSettlement,
-    totalSettled: 0,
-    transactions: [],
+    totalSettled,
+    transactions: settlements.map(s => ({
+      id: s.id,
+      amount: s.amount,
+      settledAt: s.createdAt,
+      note: s.note,
+    })),
   };
 };
 
@@ -85,9 +97,24 @@ const settleMerchantPayment = async (merchantId: string, amount: number) => {
   if (!merchant) throw new AppError(status.NOT_FOUND, 'Merchant not found.');
   if (merchant.pendingSettlement < amount) throw new AppError(status.BAD_REQUEST, 'Settlement amount exceeds pending balance.');
 
-  return prisma.merchant.update({
+  await prisma.$transaction(async (tx) => {
+    await tx.merchant.update({
+      where: { id: merchantId },
+      data: { pendingSettlement: { decrement: amount } },
+    });
+
+    await tx.merchantSettlement.create({
+      data: {
+        merchantId,
+        amount,
+        settledBy: 'ADMIN',
+        note: `Merchant settlement of ${amount} BDT (after 1.85% commission)`,
+      },
+    });
+  });
+
+  return prisma.merchant.findUnique({
     where: { id: merchantId },
-    data: { pendingSettlement: { decrement: amount } },
     include: { user: { select: { id: true, name: true, email: true } } },
   });
 };

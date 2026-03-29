@@ -123,10 +123,24 @@ const getMyCODSettlement = async (userId: string) => {
   const courier = await prisma.courier.findUnique({ where: { userId } });
   if (!courier) throw new AppError(status.NOT_FOUND, 'Courier profile not found.');
 
+  const settlements = await prisma.cODSettlement.findMany({
+    where: { courierId: courier.id },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  const totalSettled = settlements.reduce((sum, s) => sum + s.amount, 0);
+
   return {
     pendingCOD: courier.pendingCOD,
-    totalSettled: 0,
-    transactions: [],
+    totalSettled,
+    totalEarnings: courier.totalEarnings,
+    companyEarnings: totalSettled - courier.totalEarnings,
+    transactions: settlements.map(s => ({
+      id: s.id,
+      amount: s.amount,
+      settledAt: s.createdAt,
+      note: s.note,
+    })),
   };
 };
 
@@ -135,9 +149,24 @@ const settleCOD = async (courierId: string, amount: number) => {
   if (!courier) throw new AppError(status.NOT_FOUND, 'Courier not found.');
   if (courier.pendingCOD < amount) throw new AppError(status.BAD_REQUEST, 'Amount exceeds pending COD.');
 
-  return prisma.courier.update({
+  await prisma.$transaction(async (tx) => {
+    await tx.courier.update({
+      where: { id: courierId },
+      data: { pendingCOD: { decrement: amount } },
+    });
+
+    await tx.cODSettlement.create({
+      data: {
+        courierId,
+        amount,
+        settledBy: 'ADMIN',
+        note: `COD settlement of ${amount} BDT`,
+      },
+    });
+  });
+
+  return prisma.courier.findUnique({
     where: { id: courierId },
-    data: { pendingCOD: { decrement: amount } },
     include: { user: { select: { id: true, name: true, email: true, phone: true } } },
   });
 };

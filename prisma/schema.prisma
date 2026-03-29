@@ -141,9 +141,10 @@ model Courier {
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 
-  user      User          @relation(fields: [userId], references: [id])
-  shipments Shipment[]
-  legs      ShipmentLeg[]
+  user            User             @relation(fields: [userId], references: [id])
+  shipments       Shipment[]
+  legs            ShipmentLeg[]
+  codSettlements  CODSettlement[]
 
   @@index([city])
 }
@@ -157,8 +158,9 @@ model Merchant {
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
-  user      User       @relation(fields: [userId], references: [id])
-  shipments Shipment[]
+  user                 User                  @relation(fields: [userId], references: [id])
+  shipments            Shipment[]
+  merchantSettlements  MerchantSettlement[]
 }
 
 model Hub {
@@ -309,4 +311,30 @@ model ShipmentEvent {
   timestamp  DateTime       @default(now())
 
   shipment Shipment @relation(fields: [shipmentId], references: [id])
+}
+
+model CODSettlement {
+  id         String   @id @default(uuid())
+  courierId  String
+  amount     Float
+  settledBy  String
+  note       String?
+  createdAt  DateTime @default(now())
+
+  courier Courier @relation(fields: [courierId], references: [id])
+
+  @@index([courierId])
+}
+
+model MerchantSettlement {
+  id         String   @id @default(uuid())
+  merchantId String
+  amount     Float
+  settledBy  String
+  note       String?
+  createdAt  DateTime @default(now())
+
+  merchant Merchant @relation(fields: [merchantId], references: [id])
+
+  @@index([merchantId])
 }
