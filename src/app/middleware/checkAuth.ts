@@ -43,7 +43,7 @@ export const checkAuth = (...authRoles: Role[]) => async (req: Request, res: Res
       throw new AppError(status.FORBIDDEN, 'Forbidden! You do not have permission.');
     }
 
-    req.user = { userId: user.id, role: user.role, email: user.email };
+    req.user = { userId: user.id, role: user.role, email: user.email, name: user.name };
 
     next();
   } catch (error) {
