@@ -341,6 +341,7 @@ model MerchantSettlement {
 
 model Visit {
   id        String   @id @default(uuid())
+  sessionId String?
   ip        String?
   userAgent String?
   userId    String?
@@ -351,5 +352,38 @@ model Visit {
   createdAt DateTime @default(now())
 
   @@index([createdAt])
+  @@index([userId])
+  @@index([sessionId])
+}
+
+model PageViewStat {
+  id        String   @id @default(uuid())
+  page      String
+  date      DateTime @db.Date
+  hour      Int
+  userRole  String?
+  viewCount Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([page, date, hour, userRole])
+  @@index([date])
+  @@index([page])
+}
+
+model DailyVisitor {
+  id        String   @id @default(uuid())
+  sessionId String   @unique
+  userId    String?
+  userEmail String?
+  userName  String?
+  userRole  String?
+  date      DateTime @db.Date
+  pages     String[]
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([date])
   @@index([userId])
 }

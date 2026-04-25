@@ -6,9 +6,16 @@ import { AnalyticsService } from './analytics.service.js';
 const trackVisit = catchAsync(async (req, res) => {
   const ip = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress;
   const userAgent = req.headers['user-agent'];
-  const { page } = req.body;
+  const { page, sessionId, isNewSession, visitedPages } = req.body;
   
-  const visitData: any = { ip, userAgent, page };
+  const visitData: any = { 
+    ip, 
+    userAgent, 
+    page, 
+    sessionId,
+    isNewSession,
+    visitedPages 
+  };
   
   if (req.user) {
     visitData.userId = req.user.userId;
@@ -31,4 +38,9 @@ const getAllVisits = catchAsync(async (req, res) => {
   sendResponse(res, { httpStatusCode: status.OK, success: true, message: 'Visits fetched.', data: result.data, meta: result.meta });
 });
 
-export const AnalyticsController = { trackVisit, getAnalytics, getAllVisits };
+const getPageStats = catchAsync(async (req, res) => {
+  const result = await AnalyticsService.getPageStats(req.query);
+  sendResponse(res, { httpStatusCode: status.OK, success: true, message: 'Page stats fetched.', data: result });
+});
+
+export const AnalyticsController = { trackVisit, getAnalytics, getAllVisits, getPageStats };

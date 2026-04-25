@@ -8,6 +8,13 @@ A production-ready courier and delivery management system built with Node.js, Ex
 [![Prisma](https://img.shields.io/badge/Prisma-6.19-2D3748)](https://www.prisma.io/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-blue)](https://www.postgresql.org/)
 
+---
+![SwiftShip Backend](./public/SwiftShip-Backend.png)
+![SwiftShip](./public/SwiftShip.png)
+
+
+---
+
 ## Live Demo
 
 - Backend API: https://swiftship-backend.vercel.app
@@ -78,6 +85,15 @@ User:        ayesha@example.com / Password@123
 - Automatic route planning
 - Leg-based courier workflow for local deliveries
 - Shipment cancellation support
+
+### Return System
+- Delivery refusal handling with automatic return leg creation
+- Reverse routing from delivery location back to origin hub
+- Single return shipping charge (equal to original delivery cost)
+- Infinite loop protection -- stores package at nearest hub after second refusal
+- Return reason tracking and notifications
+- Automatic shipment status updates to RETURNED
+- COD not collected on delivery failure
 
 ### Dynamic Pricing Engine
 - Region-based pricing (LOCAL, NATIONAL, INTERNATIONAL)
@@ -768,6 +784,7 @@ This project is licensed under the ISC License.
 - [x] Hub-based multi-leg delivery system
 - [x] Automatic route planning
 - [x] Leg-based courier workflow
+- [x] Return system with infinite loop protection
 - [ ] Real-time tracking with WebSockets
 - [ ] Mobile app (React Native)
 - [ ] Admin dashboard (React)

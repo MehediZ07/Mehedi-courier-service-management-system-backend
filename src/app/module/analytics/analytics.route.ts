@@ -22,5 +22,6 @@ router.post('/track', optionalAuth, AnalyticsController.trackVisit);
 router.post('/track-guest', AnalyticsController.trackVisit);
 router.get('/stats', checkAuth('SUPER_ADMIN'), AnalyticsController.getAnalytics);
 router.get('/visits', checkAuth('SUPER_ADMIN'), AnalyticsController.getAllVisits);
+router.get('/page-stats', checkAuth('SUPER_ADMIN'), AnalyticsController.getPageStats);
 
 export const AnalyticsRoutes = router;

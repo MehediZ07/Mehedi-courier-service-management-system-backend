@@ -143,8 +143,9 @@ const getAvailableLegs = async (userId: string, queryParams: IQueryParams) => {
 
   const eligibleLegs = rawData.filter((leg) => {
     const siblings: SiblingLeg[] = leg.shipment?.legs ?? [];
+    // Allow COMPLETED or FAILED status for prior legs (FAILED is valid for return journeys)
     return !siblings.some(
-      (s) => s.legNumber < leg.legNumber && s.status !== 'COMPLETED',
+      (s) => s.legNumber < leg.legNumber && s.status !== 'COMPLETED' && s.status !== 'FAILED',
     );
   });
 
@@ -296,17 +297,28 @@ const markLegDelivered = async (legId: string, userId: string, proofOfDelivery?:
   const courier = await prisma.courier.findUnique({ where: { userId } });
   if (!courier) throw new AppError(status.NOT_FOUND, 'Courier profile not found.');
 
-  const leg = await prisma.shipmentLeg.findUnique({ where: { id: legId }, include: { shipment: { include: { pricing: true, payment: true } } } });
+  const leg = await prisma.shipmentLeg.findUnique({ 
+    where: { id: legId }, 
+    include: { 
+      shipment: { 
+        include: { 
+          pricing: true, 
+          payment: true,
+          legs: { orderBy: { legNumber: 'asc' } }
+        } 
+      } 
+    } 
+  });
   if (!leg) throw new AppError(status.NOT_FOUND, 'Leg not found.');
   if (leg.courierId !== courier.id) throw new AppError(status.FORBIDDEN, 'This leg is not assigned to you.');
   if (leg.status !== 'IN_PROGRESS') throw new AppError(status.BAD_REQUEST, 'Leg must be in IN_PROGRESS status.');
 
-  // Validate leg sequence
+  // Validate leg sequence - allow FAILED legs (for return journeys after delivery failure)
   if (leg.legNumber > 1) {
     const previousLeg = await prisma.shipmentLeg.findFirst({
       where: { shipmentId: leg.shipmentId, legNumber: leg.legNumber - 1 },
     });
-    if (previousLeg && previousLeg.status !== 'COMPLETED') {
+    if (previousLeg && previousLeg.status !== 'COMPLETED' && previousLeg.status !== 'FAILED') {
       throw new AppError(status.BAD_REQUEST, 'Previous leg must be completed first.');
     }
   }
@@ -314,24 +326,45 @@ const markLegDelivered = async (legId: string, userId: string, proofOfDelivery?:
   return prisma.$transaction(async (tx) => {
     const totalLegs = await tx.shipmentLeg.count({ where: { shipmentId: leg.shipmentId } });
     const isLastLeg = leg.legNumber === totalLegs;
-    const isCOD = leg.shipment.payment?.method === 'COD';
+    const originalPaymentMethod = leg.shipment.payment?.method;
     const isDeliveryLeg = leg.legType === 'DELIVERY' || leg.legType === 'DIRECT';
     const hasProductPrice = leg.shipment.productPrice && leg.shipment.productPrice > 0;
+
+    // Check if this is a return leg (has failed delivery legs before it)
+    const failedDeliveryLegs = leg.shipment.legs.filter(
+      (l) => l.legNumber < leg.legNumber && (l.legType === 'DELIVERY' || l.legType === 'DIRECT') && l.status === 'FAILED'
+    );
+    const isReturnLeg = failedDeliveryLegs.length > 0;
 
     // Calculate courier earning (10% of total price divided by number of legs)
     const earning = leg.shipment.pricing ? (leg.shipment.pricing.totalPrice * 0.1) / totalLegs : 0;
 
-    // Handle cash collection on final delivery
+    // Handle cash collection
     let codAmount = 0;
+    let codCollected = false;
+
     if (isDeliveryLeg && isLastLeg) {
-      if (isCOD) {
-        // COD = product price + shipment charge
-        const productPrice = leg.shipment.productPrice || 0;
-        const shipmentCharge = leg.shipment.pricing?.totalPrice || 0;
-        codAmount = productPrice + shipmentCharge;
-      } else if (hasProductPrice) {
-        // Stripe payment but has product price - collect only product price
-        codAmount = leg.shipment.productPrice || 0;
+      if (isReturnLeg) {
+        // RETURN LEG DELIVERY (sender receiving back their product)
+        if (originalPaymentMethod === 'COD') {
+          // Original was COD → Return shipping is also COD (must collect return cost)
+          codAmount = leg.shipment.pricing?.totalPrice || 0; // Return shipping cost
+          codCollected = true;
+        }
+        // If original was STRIPE → Return shipping already paid, no collection needed
+      } else {
+        // NORMAL FORWARD DELIVERY (receiver receiving product)
+        if (originalPaymentMethod === 'COD') {
+          // COD = product price + shipment charge
+          const productPrice = leg.shipment.productPrice || 0;
+          const shipmentCharge = leg.shipment.pricing?.totalPrice || 0;
+          codAmount = productPrice + shipmentCharge;
+          codCollected = true;
+        } else if (hasProductPrice) {
+          // Stripe payment but has product price - collect only product price
+          codAmount = leg.shipment.productPrice || 0;
+          codCollected = true;
+        }
       }
     }
 
@@ -341,7 +374,7 @@ const markLegDelivered = async (legId: string, userId: string, proofOfDelivery?:
         status: 'COMPLETED',
         deliveredAt: new Date(),
         courierEarning: earning,
-        codCollected: isCOD && isDeliveryLeg && isLastLeg,
+        codCollected,
         codAmount: codAmount > 0 ? codAmount : undefined,
       },
       include: legInclude,
@@ -356,8 +389,8 @@ const markLegDelivered = async (legId: string, userId: string, proofOfDelivery?:
       },
     });
 
-    // Update merchant pending settlement (product price - 1.85% commission)
-    if (isLastLeg && leg.shipment.merchantId && leg.shipment.productPrice > 0) {
+    // Update merchant pending settlement (product price - 1.85% commission) - only for forward deliveries
+    if (isLastLeg && !isReturnLeg && leg.shipment.merchantId && leg.shipment.productPrice > 0) {
       const merchantAmount = leg.shipment.productPrice * 0.9815; // 100% - 1.85%
       await tx.merchant.update({
         where: { id: leg.shipment.merchantId },
@@ -368,16 +401,18 @@ const markLegDelivered = async (legId: string, userId: string, proofOfDelivery?:
     }
 
     if (isLastLeg) {
+      const finalStatus = isReturnLeg ? 'RETURNED' : 'DELIVERED';
+      
       await tx.shipment.update({
         where: { id: leg.shipmentId },
         data: {
-          status: 'DELIVERED',
+          status: finalStatus,
           proofOfDelivery,
-          paymentStatus: isCOD ? 'PAID' : leg.shipment.paymentStatus,
+          paymentStatus: originalPaymentMethod === 'COD' ? 'PAID' : leg.shipment.paymentStatus,
         },
       });
 
-      if (isCOD) {
+      if (originalPaymentMethod === 'COD') {
         await tx.payment.updateMany({
           where: { shipmentId: leg.shipmentId },
           data: { status: 'PAID' },
@@ -387,9 +422,11 @@ const markLegDelivered = async (legId: string, userId: string, proofOfDelivery?:
       await tx.shipmentEvent.create({
         data: {
           shipmentId: leg.shipmentId,
-          status: 'DELIVERED',
+          status: finalStatus,
           updatedBy: userId,
-          note: `Final delivery completed`,
+          note: isReturnLeg 
+            ? `Return delivery completed - Package returned to sender` 
+            : `Final delivery completed`,
         },
       });
 
@@ -398,7 +435,9 @@ const markLegDelivered = async (legId: string, userId: string, proofOfDelivery?:
           shipmentId: leg.shipmentId,
           userId: leg.shipment.senderId,
           role: 'USER',
-          message: `Your shipment ${leg.shipment.trackingNumber} has been delivered successfully!`,
+          message: isReturnLeg
+            ? `Your shipment ${leg.shipment.trackingNumber} has been returned to you successfully.`
+            : `Your shipment ${leg.shipment.trackingNumber} has been delivered successfully!`,
         },
       });
     } else {
@@ -517,7 +556,16 @@ const assignCourierToLeg = async (legId: string, courierId: string) => {
 const releaseHubTransfer = async (legIds: string[], note?: string) => {
   const legs = await prisma.shipmentLeg.findMany({
     where: { id: { in: legIds } },
-    include: { shipment: true },
+    include: { 
+      shipment: {
+        include: {
+          legs: {
+            select: { id: true, legNumber: true, status: true, legType: true },
+            orderBy: { legNumber: 'asc' }
+          }
+        }
+      } 
+    },
   });
 
   if (legs.length === 0) throw new AppError(status.NOT_FOUND, 'No legs found.');
@@ -525,6 +573,18 @@ const releaseHubTransfer = async (legIds: string[], note?: string) => {
   for (const leg of legs) {
     if (leg.legType !== 'HUB_TRANSFER') throw new AppError(status.BAD_REQUEST, 'Only HUB_TRANSFER legs can be released.');
     if (leg.status !== 'PENDING') throw new AppError(status.BAD_REQUEST, `Leg ${leg.id} is not in PENDING status.`);
+    
+    // Validate prior legs are completed
+    if (leg.legNumber > 1) {
+      const priorLegs = leg.shipment.legs.filter(l => l.legNumber < leg.legNumber);
+      const incompleteLeg = priorLegs.find(l => l.status !== 'COMPLETED' && l.status !== 'FAILED');
+      if (incompleteLeg) {
+        throw new AppError(
+          status.BAD_REQUEST,
+          `Cannot release leg ${leg.legNumber} of shipment ${leg.shipment.trackingNumber}. Leg ${incompleteLeg.legNumber} (${incompleteLeg.legType}) must be COMPLETED first. Current status: ${incompleteLeg.status}.`
+        );
+      }
+    }
   }
 
   return prisma.$transaction(async (tx) => {
@@ -724,22 +784,42 @@ const markDeliveryRefused = async (legId: string, userId: string, reason?: strin
     throw new AppError(status.BAD_REQUEST, 'Shipment missing required address information for return routing.');
   }
 
-  return prisma.$transaction(async (tx) => {
-    await tx.shipmentLeg.update({
-      where: { id: legId },
-      data: {
-        status: 'FAILED',
-        note: `Delivery refused by receiver. Reason: ${reason || 'Not specified'}`,
+  // Check if this shipment already has failed delivery legs (indicating it's already a return)
+  const failedDeliveryLegs = leg.shipment.legs.filter(
+    (l) => (l.legType === 'DELIVERY' || l.legType === 'DIRECT') && l.status === 'FAILED'
+  );
+
+  // If this is already a return, find nearest hub BEFORE transaction
+  let nearestHub = null;
+  if (failedDeliveryLegs.length > 0) {
+    nearestHub = await prisma.hub.findFirst({
+      where: {
+        city: leg.shipment.pickupCity,
+        isActive: true,
       },
+      orderBy: { createdAt: 'asc' },
     });
 
-    // Return shipping cost = same as original shipment charge (sender pays once, not double)
-    const returnShippingCost = leg.shipment.pricing?.totalPrice || 0;
-    const maxLegNumber = Math.max(...leg.shipment.legs.map(l => l.legNumber));
+    if (!nearestHub) {
+      throw new AppError(
+        status.NOT_FOUND,
+        `No active hub found in ${leg.shipment.pickupCity} to store the package.`,
+      );
+    }
+  }
+
+  // Plan return route BEFORE transaction (if needed)
+  let returnLegPlans: any[] = [];
+  let returnShippingCost = 0;
+  let maxLegNumber = 0;
+
+  if (failedDeliveryLegs.length === 0) {
+    // First delivery failure - plan return route
+    returnShippingCost = leg.shipment.pricing?.totalPrice || 0;
+    maxLegNumber = Math.max(...leg.shipment.legs.map(l => l.legNumber));
     
-    // Use route planning to create proper return legs
     const regionType = detectRegionType(leg.shipment.deliveryCity, leg.shipment.pickupCity);
-    const returnLegPlans = await planShipmentRoute({
+    returnLegPlans = await planShipmentRoute({
       pickupAddress: leg.shipment.deliveryAddress,
       pickupCity: leg.shipment.deliveryCity,
       deliveryAddress: leg.shipment.pickupAddress,
@@ -748,10 +828,64 @@ const markDeliveryRefused = async (legId: string, userId: string, reason?: strin
       priority: leg.shipment.priority as 'STANDARD' | 'EXPRESS',
       regionType,
     });
+  }
 
-    // Create return legs with proper routing
+  // Now execute transaction with all data prepared
+  return prisma.$transaction(async (tx) => {
+    // Mark current leg as FAILED
+    await tx.shipmentLeg.update({
+      where: { id: legId },
+      data: {
+        status: 'FAILED',
+        note: failedDeliveryLegs.length > 0
+          ? `Return delivery refused by sender. Package will be stored at nearest hub. Reason: ${reason || 'Not specified'}`
+          : `Delivery refused by receiver. Reason: ${reason || 'Not specified'}`,
+      },
+    });
+
+    // If this is already a return (has previous failed delivery), store at hub
+    if (failedDeliveryLegs.length > 0 && nearestHub) {
+      await tx.shipment.update({
+        where: { id: leg.shipmentId },
+        data: { 
+          status: 'RETURNED',
+          note: `Package stored at ${nearestHub.name} - Both receiver and sender refused delivery`,
+        },
+      });
+
+      await tx.shipmentEvent.create({
+        data: {
+          shipmentId: leg.shipmentId,
+          status: 'RETURNED',
+          updatedBy: userId,
+          note: `Return delivery refused by sender. Package stored at ${nearestHub.name} (${nearestHub.address}). ${reason || ''}`,
+        },
+      });
+
+      await tx.notification.create({
+        data: {
+          shipmentId: leg.shipmentId,
+          userId: leg.shipment.senderId,
+          role: 'USER',
+          message: `Your shipment ${leg.shipment.trackingNumber} could not be delivered. Package is now stored at ${nearestHub.name}. Please contact support to arrange pickup.`,
+        },
+      });
+
+      return { 
+        leg, 
+        returnLegs: [], 
+        returnShippingCost: 0,
+        storedAtHub: nearestHub,
+      };
+    }
+
+    // This is the first delivery failure - create return legs
     const returnLegs = [];
     for (const plan of returnLegPlans) {
+      const isFirstReturnLeg = plan.legNumber === 1;
+      // Auto-complete PICKUP action for first return leg (courier already has package)
+      const shouldAutoCompletePickup = isFirstReturnLeg && (plan.legType === 'PICKUP' || plan.legType === 'DIRECT');
+      
       const returnLeg = await tx.shipmentLeg.create({
         data: {
           shipmentId: leg.shipmentId,
@@ -763,8 +897,15 @@ const markDeliveryRefused = async (legId: string, userId: string, reason?: strin
           destType: plan.destType,
           destAddress: plan.destAddress,
           destHubId: plan.destHubId,
-          status: 'PENDING',
-          note: plan.legNumber === 1 
+          // Auto-complete pickup action only - courier still needs to deliver
+          status: shouldAutoCompletePickup ? 'IN_PROGRESS' : 'PENDING',
+          courierId: shouldAutoCompletePickup ? courier.id : null,
+          assignedAt: shouldAutoCompletePickup ? new Date() : null,
+          pickedUpAt: shouldAutoCompletePickup ? new Date() : null,
+          deliveredAt: null, // Courier must complete delivery
+          note: shouldAutoCompletePickup
+            ? `Return leg - Pickup auto-completed (courier already has package). Courier must deliver to complete this leg. Return shipping: ${returnShippingCost} BDT`
+            : isFirstReturnLeg
             ? `Return leg - Delivery refused. Return shipping: ${returnShippingCost} BDT (sender pays return cost, not double)`
             : undefined,
         },
@@ -772,21 +913,26 @@ const markDeliveryRefused = async (legId: string, userId: string, reason?: strin
       returnLegs.push(returnLeg);
     }
 
-    // Set first return leg as current
+    // Find the next leg that needs action
+    const nextActiveLeg = returnLegs.find(leg => leg.status === 'PENDING' || leg.status === 'IN_PROGRESS');
+    
+    // Set the next active leg as current
     await tx.shipment.update({
       where: { id: leg.shipmentId },
       data: { 
         status: 'IN_TRANSIT',
-        currentLegId: returnLegs[0].id,
+        currentLegId: nextActiveLeg ? nextActiveLeg.id : returnLegs[0].id,
       },
     });
 
+    const autoCompletedNote = returnLegs[0]?.status === 'IN_PROGRESS' ? ' (first leg pickup auto-completed - courier has package, must deliver)' : '';
+    
     await tx.shipmentEvent.create({
       data: {
         shipmentId: leg.shipmentId,
         status: 'IN_TRANSIT',
         updatedBy: userId,
-        note: `Receiver refused delivery. ${returnLegs.length} return leg(s) created. Return shipping: ${returnShippingCost} BDT (sender pays return cost). ${reason || ''}`,
+        note: `Receiver refused delivery. ${returnLegs.length} return leg(s) created${autoCompletedNote}. Return shipping: ${returnShippingCost} BDT (sender pays return cost). ${reason || ''}`,
       },
     });
 
@@ -800,6 +946,8 @@ const markDeliveryRefused = async (legId: string, userId: string, reason?: strin
     });
 
     return { leg, returnLegs, returnShippingCost };
+  }, {
+    timeout: 10000, // Increase timeout to 10 seconds
   });
 };
 

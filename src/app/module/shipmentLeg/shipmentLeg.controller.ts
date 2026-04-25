@@ -120,10 +120,15 @@ const markPickupRefused = catchAsync(async (req: Request, res: Response) => {
 
 const markDeliveryRefused = catchAsync(async (req: Request, res: Response) => {
   const result = await ShipmentLegService.markDeliveryRefused(req.params.id as string, req.user!.userId, req.body.reason);
+  
+  const message = result.returnLegs.length > 0
+    ? 'Delivery refusal recorded. Return legs created.'
+    : 'Return delivery refused. Package stored at hub.';
+  
   sendResponse(res, {
     httpStatusCode: status.OK,
     success: true,
-    message: 'Delivery refusal recorded. Return leg created.',
+    message,
     data: result,
   });
 });
